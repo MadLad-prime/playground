@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aetheria</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0c10; /* Deep space blue/black */
+            --primary-text: #e0e0e5;
+            --secondary-text: #787a8c;
+            --accent-color: #88ffff; /* Luminous cyan/teal */
+            --accent-hover: #ffffff;
+            --subtle-glow: 0 0 15px rgba(136, 255, 255, 0.3), 0 0 5px rgba(136, 255, 255, 0.5);
+            --overlay-bg: rgba(0, 0, 0, 0.85);
+            --font-primary: 'Outfit', sans-serif;
+            --font-secondary: 'Playfair Display', serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            font-family: var(--font-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            transition: background-color 0.5s ease;
+        }
+
+        .page-wrapper {
+            opacity: 1;
+            transition: opacity 0.7s ease-out;
+        }
+        .page-wrapper.fade-out {
+            opacity: 0;
+        }
+
+
+        /* --- Navigation --- */
+        #nav-toggle {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 1001;
+            cursor: pointer;
+            width: 30px;
+            height: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #nav-toggle span {
+            display: block;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-text);
+            transition: all 0.3s ease-in-out;
+            transform-origin: center;
+        }
+        #nav-toggle.active span:nth-child(1) {
+            transform: translateY(10px) rotate(45deg);
+        }
+        #nav-toggle.active span:nth-child(2) {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        #nav-toggle.active span:nth-child(3) {
+            transform: translateY(-10px) rotate(-45deg);
+        }
+
+        #main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(10, 12, 16, 0.98); /* Slightly transparent bg */
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            clip-path: circle(0% at 100% 0); /* Start hidden from top right */
+            transition: clip-path 0.7s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        #main-nav.active {
+            clip-path: circle(150% at 100% 0); /* Expand to fill screen */
+        }
+        #main-nav ul {
+            list-style: none;
+        }
+        #main-nav li {
+            margin: 25px 0;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out 0.3s, transform 0.5s ease-out 0.3s;
+        }
+        #main-nav.active li {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Stagger list items */
+        #main-nav.active li:nth-child(1) { transition-delay: 0.4s; }
+        #main-nav.active li:nth-child(2) { transition-delay: 0.5s; }
+        #main-nav.active li:nth-child(3) { transition-delay: 0.6s; }
+        #main-nav.active li:nth-child(4) { transition-delay: 0.7s; }
+
+        #main-nav a {
+            color: var(--primary-text);
+            text-decoration: none;
+            font-size: 2.5rem; /* Responsive units */
+            font-weight: 200;
+            letter-spacing: 1px;
+            position: relative;
+            padding: 5px 0;
+        }
+        #main-nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background-color: var(--accent-color);
+            transition: all 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+            transform: translateX(-50%);
+        }
+        #main-nav a:hover::after,
+        #main-nav a.nav-active::after {
+            width: 100%;
+            box-shadow: var(--subtle-glow);
+        }
+         #main-nav a:hover, #main-nav a.nav-active {
+            color: var(--accent-hover);
+        }
+
+        /* --- Hero Section --- */
+        .section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 100px 5%;
+            position: relative;
+            overflow: hidden; /* for background effects */
+        }
+        #hero {
+            text-align: center;
+        }
+        #hero-symbol {
+            width: 150px; /* Responsive */
+            height: 150px;
+            margin-bottom: 30px;
+            animation: rotateSymbol 25s linear infinite, pulseSymbol 5s ease-in-out infinite;
+        }
+        #hero-symbol path {
+            stroke-width: 0.5; /* Thinner lines */
+            stroke: var(--accent-color);
+            fill: none;
+            stroke-linecap: round;
+            filter: drop-shadow(var(--subtle-glow));
+        }
+        @keyframes rotateSymbol {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulseSymbol {
+            0%, 100% { opacity: 0.8; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        #hero h1 {
+            font-family: var(--font-primary);
+            font-size: clamp(3rem, 8vw, 6rem); /* Responsive font size */
+            font-weight: 100; /* Very thin */
+            letter-spacing: 0.3em; /* Wider spacing */
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            color: var(--primary-text);
+            opacity: 0;
+            animation: fadeInText 2s ease-out 0.5s forwards;
+        }
+        @keyframes fadeInText {
+            to { opacity: 1; }
+        }
+        #hero p.subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            font-weight: 300;
+            color: var(--secondary-text);
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: fadeInText 2s ease-out 1s forwards;
+        }
+
+        /* Subtle particle background for Hero */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Behind content */
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-family: var(--font-primary);
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 200;
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+            padding-bottom: 15px;
+            letter-spacing: 2px;
+            color: var(--primary-text);
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 1px;
+            background-color: var(--accent-color);
+            box-shadow: var(--subtle-glow);
+        }
+
+
+        /* --- Gallery Section --- */
+        #gallery {
+            background-color: #0d0f13; /* Slightly different shade */
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+            gap: 20px;
+            width: 100%;
+            max-width: 1600px;
+        }
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            aspect-ratio: 4/3; /* Or adjust as needed */
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+        }
+        .gallery-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4), 0 0 20px rgba(136,255,255,0.1);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: filter 0.4s ease, transform 0.4s ease;
+            filter: saturate(0.8) brightness(0.9); /* Slightly desaturated */
+        }
+        .gallery-item:hover img {
+            filter: saturate(1.1) brightness(1); /* Pop on hover */
+            transform: scale(1.05);
+        }
+        .gallery-item::before { /* Subtle overlay */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0));
+            opacity: 1;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+        .gallery-item:hover::before {
+            opacity: 0;
+        }
+
+        /* --- Lightbox --- */
+        #lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-bg);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0s 0.5s;
+            padding: 20px;
+        }
+        #lightbox.active {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s;
+        }
+        #lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 0 60px rgba(0,0,0,0.5);
+            transform: scale(0.8);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) 0.1s, opacity 0.4s ease 0.1s;
+        }
+        #lightbox.active img {
+            transform: scale(1);
+            opacity: 1;
+        }
+        #lightbox-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 2.5rem;
+            color: var(--primary-text);
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        #lightbox-close:hover {
+            color: var(--accent-color);
+            transform: scale(1.1) rotate(90deg);
+        }
+
+
+        /* --- "Genesis" Section (Mathematical/SVG Art) --- */
+        /* #genesis {
+            background: radial-gradient(ellipse at center, #101218 0%, var(--bg-color) 70%);
+        } */
+        .art-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 800px; /* Control art size */
+            height: 400px; /* Or dynamic height */
+            margin-bottom: 40px;
+            position: relative;
+        }
+        #svg-art-complex {
+            width: 100%;
+            height: 100%;
+        }
+        #svg-art-complex path, #svg-art-complex circle {
+            stroke: var(--accent-color);
+            stroke-width: 0.2; /* Very fine lines */
+            fill: none;
+            opacity: 0.05; /* Build up density */
+            animation: drawLine 10s ease-in-out infinite alternate;
+        }
+        @keyframes drawLine {
+          0% { stroke-dasharray: 500; stroke-dashoffset: 500; opacity: 0.03; }
+          50% { opacity: 0.08; }
+          100% { stroke-dasharray: 500; stroke-dashoffset: 0; opacity: 0.03; }
+        }
+        /* Add multiple paths with staggered animation-delay for complex visual */
+        #svg-art-complex path:nth-child(2n) { animation-delay: -2.5s; }
+        #svg-art-complex path:nth-child(3n) { animation-delay: -5s; }
+        #svg-art-complex path:nth-child(4n) { animation-delay: -7.5s; }
+
+
+        /* --- "Echoes" Section (Typography Focus) --- */
+        /* #echoes {
+            background: linear-gradient(to bottom, #0d0f13, var(--bg-color));
+        } */
+        .echoes-content {
+            max-width: 800px;
+            text-align: center;
+        }
+        .echoes-content p {
+            font-family: var(--font-secondary);
+            font-size: clamp(1.1rem, 2.8vw, 1.6rem);
+            line-height: 1.9;
+            color: var(--secondary-text);
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+         .echoes-content p:last-child {
+            color: var(--primary-text);
+            font-weight: 400;
+            font-style: normal;
+         }
+
+        /* Utility for observing elements for animation */
+        .hidden-for-anim {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .hidden-for-anim.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 0.9rem;
+            color: var(--secondary-text);
+            background-color: #080a0e;
+        }
+
+        /* Media Queries for Smaller Screens */
+        @media (max-width: 768px) {
+            #main-nav a {
+                font-size: 1.8rem;
+            }
+            #hero h1 {
+                letter-spacing: 0.2em;
+            }
+             .gallery-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+            }
+            #lightbox-close {
+                top: 20px;
+                right: 20px;
+                font-size: 2rem;
+            }
+            .section-title {
+                margin-bottom: 40px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+
+        <button id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <nav id="main-nav" aria-label="Main navigation">
+            <ul>
+                <li><a href="#hero" class="nav-link nav-active">AURA</a></li>
+                <li><a href="#gallery" class="nav-link">GALLERY</a></li>
+                <li><a href="#genesis" class="nav-link">GENESIS</a></li>
+                <li><a href="#echoes" class="nav-link">ECHOES</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="hero" class="section">
+                <canvas id="particle-canvas"></canvas>
+                <svg id="hero-symbol" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Complex Geometric Symbol -->
+                    <circle cx="50" cy="50" r="45"/>
+                    <circle cx="50" cy="50" r="35"/>
+                    <circle cx="50" cy="50" r="25"/>
+                    <path d="M50 5 L50 95"/> <path d="M5 50 L95 50"/>
+                    <path d="M18 18 L82 82"/> <path d="M18 82 L82 18"/>
+                    <rect x="30" y="30" width="40" height="40" transform="rotate(45 50 50)"/>
+                </svg>
+                <h1>AETHERIA</h1>
+                <p class="subtitle hidden-for-anim">An Ode to Ephemeral Beauty</p>
+            </section>
+
+            <section id="gallery" class="section">
+                <h2 class="section-title hidden-for-anim">Gallery of Light</h2>
+                <div class="gallery-grid">
+                    <!-- Add about 6-9 images -->
+                    <div class="gallery-item hidden-for-anim" data-src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60" data-alt="Misty Mountains">
+                        <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=400&q=60" alt="Misty Mountains Thumbnail">
+                    </div>
+                    <div class="gallery-item hidden-for-anim" data-src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60" data-alt="Dewy Forest Path">
+                        <img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=400&q=60" alt="Dewy Forest Path Thumbnail">
+                    </div>
+                    <div class="gallery-item hidden-for-anim" data-src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60" data-alt="Waterfall">
+                        <img src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=400&q=60" alt="Waterfall Thumbnail">
+                    </div>
+                     <div class="gallery-item hidden-for-anim" data-src="https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGxhbmRzY2FwZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60" data-alt="Lake and Mountains">
+                        <img src="https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGxhbmRzY2FwZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=400&q=60" alt="Lake and Mountains Thumbnail">
+                    </div>
+                    <div class="gallery-item hidden-for-anim" data-src="https://images.unsplash.com/photo-1505144808419-1957a94ca61e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fG5hdHVyZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=800&q=60" data-alt="Beach Sunset">
+                        <img src="https://images.unsplash.com/photo-1505144808419-1957a94ca61e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fG5hdHVyZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=400&q=60" alt="Beach Sunset Thumbnail">
+                    </div>
+                     <div class="gallery-item hidden-for-anim" data-src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60" data-alt="Tropical Forest">
+                        <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bmF0dXJlfGVufDB8fDB8fHww&auto=format&fit=crop&w=400&q=60" alt="Tropical Forest Thumbnail">
+                    </div>
+                </div>
+            </section>
+
+            <div id="lightbox">
+                <span id="lightbox-close">×</span>
+                <img id="lightbox-image" src="" alt="Lightbox image">
+            </div>
+
+            <section id="genesis" class="section">
+                <h2 class="section-title hidden-for-anim">Genesis Patterns</h2>
+                <div class="art-container hidden-for-anim">
+                     <svg id="svg-art-complex" viewBox="0 0 200 100">
+                        <!-- Generated-like paths. Could be more complex. -->
+                        <path d="M10 10 C 40 70, 60 70, 90 10 S 140 70, 190 10"/>
+                        <path d="M10 20 C 50 80, 70 80, 90 20 S 130 80, 190 20"/>
+                        <path d="M10 30 C 60 90, 80 90, 90 30 S 120 90, 190 30"/>
+                        <circle cx="50" cy="50" r="40" />
+                        <circle cx="150" cy="50" r="30" />
+                         <!-- More paths to build density -->
+                        <path d="M10,50 Q50,10 90,50 T170,50" />
+                        <path d="M10,60 Q50,20 90,60 T170,60" />
+                        <path d="M10,70 Q50,30 90,70 T170,70" />
+                    </svg>
+                </div>
+                <p class="subtitle hidden-for-anim" style="text-align:center; max-width: 600px; color: var(--secondary-text);">
+                    From void, structure. From silence, symphony. Exploring the emergent beauty in coded forms.
+                </p>
+            </section>
+
+            <section id="echoes" class="section">
+                <h2 class="section-title hidden-for-anim">Echoes</h2>
+                <div class="echoes-content hidden-for-anim">
+                    <p>"And as the last light kisses the horizon, we find not an ending, but the quiet promise of a new dawn. Each moment, a fleeting masterpiece, painted on the canvas of existence."</p>
+                    <p>- The Universe</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© <span id="year"></span> Aetheria. Crafted with stardust & code.</p>
+        </footer>
+    </div> <!-- end .page-wrapper -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navToggle = document.getElementById('nav-toggle');
+            const mainNav = document.getElementById('main-nav');
+            const navLinks = document.querySelectorAll('#main-nav .nav-link');
+            const pageWrapper = document.querySelector('.page-wrapper');
+            const yearSpan = document.getElementById('year');
+            yearSpan.textContent = new Date().getFullYear();
+
+            // --- Navigation ---
+            navToggle.addEventListener('click', () => {
+                const isActive = mainNav.classList.toggle('active');
+                navToggle.classList.toggle('active');
+                navToggle.setAttribute('aria-expanded', isActive);
+                document.body.style.overflow = isActive ? 'hidden' : '';
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    // Smooth scroll to section
+                    const targetId = link.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        e.preventDefault(); // Prevent instant jump
+                        
+                        // Simulate page transition feel
+                        pageWrapper.classList.add('fade-out');
+
+                        setTimeout(() => {
+                            // Actual scroll after content fades
+                            const offsetTop = targetElement.offsetTop;
+                            window.scrollTo({
+                                top: offsetTop - (document.documentElement.clientWidth > 768 ? 0 : 60), // Adjusted for potential fixed header on mobile
+                                behavior: 'auto' // 'auto' for instant after fade, 'smooth' might conflict
+                            });
+
+                            pageWrapper.classList.remove('fade-out');
+                            
+                            // Close nav
+                            mainNav.classList.remove('active');
+                            navToggle.classList.remove('active');
+                            navToggle.setAttribute('aria-expanded', 'false');
+                            document.body.style.overflow = '';
+
+                            // Update active nav link
+                            navLinks.forEach(navLink => navLink.classList.remove('nav-active'));
+                            link.classList.add('nav-active');
+
+                        }, 600); // Match CSS transition time slightly less
+                    }
+                });
+            });
+
+            // Update active nav link on scroll
+            const sections = document.querySelectorAll('.section');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (pageYOffset >= sectionTop - sectionHeight / 3) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('nav-active');
+                    if (link.getAttribute('href').substring(1) === current) {
+                        link.classList.add('nav-active');
+                    }
+                });
+            });
+
+
+            // --- Lightbox ---
+            const galleryItems = document.querySelectorAll('.gallery-item');
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightbox-image');
+            const lightboxClose = document.getElementById('lightbox-close');
+
+            galleryItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const fullSrc = item.dataset.src;
+                    const altText = item.dataset.alt;
+                    lightboxImage.src = fullSrc;
+                    lightboxImage.alt = altText;
+                    lightbox.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            });
+
+            lightboxClose.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (e) => { // Close on clicking overlay
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
+            document.addEventListener('keydown', (e) => { // Close on Escape key
+                if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                }
+            });
+
+            function closeLightbox() {
+                lightbox.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // --- Intersection Observer for animations ---
+            const animatedElements = document.querySelectorAll('.hidden-for-anim');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Optional: stop observing once visible
+                    }
+                });
+            }, { threshold: 0.1 }); // Trigger when 10% of element is visible
+
+            animatedElements.forEach(el => observer.observe(el));
+
+
+            // --- Hero Particle Canvas ---
+            const canvas = document.getElementById('particle-canvas');
+            if (canvas) { // Ensure canvas exists
+                const ctx = canvas.getContext('2d');
+                let particlesArray;
+
+                function setCanvasSize() {
+                    canvas.width = window.innerWidth;
+                    canvas.height = document.getElementById('hero').offsetHeight; // Match hero section height
+                }
+                setCanvasSize();
+
+
+                class Particle {
+                    constructor(x, y, directionX, directionY, size, color) {
+                        this.x = x;
+                        this.y = y;
+                        this.directionX = directionX;
+                        this.directionY = directionY;
+                        this.size = size;
+                        this.color = color;
+                    }
+                    draw() {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                        ctx.fillStyle = this.color;
+                        ctx.fill();
+                    }
+                    update() {
+                        if (this.x > canvas.width || this.x < 0) {
+                            this.directionX = -this.directionX;
+                        }
+                        if (this.y > canvas.height || this.y < 0) {
+                            this.directionY = -this.directionY;
+                        }
+                        this.x += this.directionX;
+                        this.y += this.directionY;
+                        this.draw();
+                    }
+                }
+
+                function initParticles() {
+                    particlesArray = [];
+                    let numberOfParticles = (canvas.height * canvas.width) / 15000; // Density based on area
+                    for (let i = 0; i < numberOfParticles; i++) {
+                        let size = (Math.random() * 1.5) + 0.5; // Very small particles
+                        let x = (Math.random() * ((canvas.width - size * 2) - (size * 2)) + size * 2);
+                        let y = (Math.random() * ((canvas.height - size * 2) - (size * 2)) + size * 2);
+                        let directionX = (Math.random() * .4) - .2; // Slow movement
+                        let directionY = (Math.random() * .4) - .2;
+                        let color = 'rgba(136, 255, 255, 0.2)'; // Faint accent color
+                        particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                    }
+                }
+
+                function animateParticles() {
+                    requestAnimationFrame(animateParticles);
+                    ctx.clearRect(0,0,canvas.width, canvas.height);
+                    for (let i = 0; i < particlesArray.length; i++) {
+                        particlesArray[i].update();
+                    }
+                }
+                
+                initParticles();
+                animateParticles();
+
+                window.addEventListener('resize', () => {
+                    setCanvasSize();
+                    initParticles(); 
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>

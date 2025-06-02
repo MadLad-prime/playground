@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NovaCore Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;300;400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0D1117; /* Deep space */
+            --bg-secondary: #161B22; /* Slightly lighter for elements */
+            --border-color: #30363D;
+            --text-primary: #C9D1D9;
+            --text-secondary: #8B949E;
+            --accent-primary: #58A6FF; /* Bright blue */
+            --accent-secondary: #3FB950; /* Bright green */
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Exo 2', sans-serif;
+            --transition-speed: 0.4s;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Header & Navigation --- */
+        .app-header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        .logo span {
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            display: flex;
+        }
+
+        .main-nav li {
+            margin-left: 25px;
+        }
+
+        .main-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 400;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+            position: relative;
+        }
+
+        .main-nav a:hover,
+        .main-nav a.active {
+            color: var(--accent-primary);
+            /* background-color: rgba(88, 166, 255, 0.1); */
+        }
+        .main-nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background-color: var(--accent-primary);
+            animation: drawUnderline 0.3s ease-out forwards;
+        }
+        @keyframes drawUnderline {
+            from { width: 0%; }
+            to { width: 60%; }
+        }
+
+
+        /* --- Main Content Area --- */
+        .app-main {
+            flex-grow: 1;
+            padding: 40px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity var(--transition-speed) ease-out, transform var(--transition-speed) ease-out;
+        }
+
+        .app-main.loading {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        .page-title::first-letter {
+            color: var(--accent-primary);
+        }
+
+
+        /* --- Basic Page Element Styles --- */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 10px var(--accent-primary_alpha);
+            --accent-primary_alpha: rgba(88, 166, 255, 0.1); /* For box shadow glow */
+        }
+
+        .card h3 {
+            color: var(--accent-primary);
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        .card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+        .button {
+            display: inline-block;
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-top: 15px;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #79bbff; /* Lighter accent */
+            transform: translateY(-2px);
+        }
+        .button.secondary {
+            background-color: transparent;
+            color: var(--accent-secondary);
+            border: 1px solid var(--accent-secondary);
+        }
+        .button.secondary:hover {
+            background-color: rgba(63, 185, 80, 0.1);
+            color: #63dd72;
+        }
+
+
+        /* Specific Page Styles */
+
+        /* Home Page */
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(rgba(13, 17, 23, 0.8), rgba(13, 17, 23, 0.8)),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="10" cy="10" r="1" fill="%2330363D"/><circle cx="30" cy="20" r="0.5" fill="%2330363D"/><circle cx="50" cy="10" r="1.2" fill="%2330363D"/><circle cx="70" cy="30" r="0.8" fill="%2330363D"/><circle cx="90" cy="20" r="1" fill="%2330363D"/><circle cx="20" cy="50" r="1.5" fill="%2330363D"/><circle cx="50" cy="60" r="0.7" fill="%2330363D"/><circle cx="80" cy="50" r="1.1" fill="%2330363D"/><circle cx="10" cy="80" r="0.9" fill="%2330363D"/><circle cx="40" cy="90" r="1.3" fill="%2330363D"/><circle cx="70" cy="80" r="0.6" fill="%2330363D"/></svg>');
+            background-size: auto, 100px 100px; /* Subtle dotted background */
+            border-radius: 10px;
+            margin-bottom: 40px;
+        }
+        .hero-section h1 {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+        .hero-section h1 span { color: var(--accent-primary); }
+        .hero-section p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto 30px auto;
+        }
+
+        /* Quantum Lab SVG */
+        #quantum-art-svg {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: block;
+            margin: 20px auto;
+        }
+        #quantum-art-svg .q-particle {
+            animation: qPulse 3s infinite ease-in-out alternate;
+            transform-origin: center center;
+        }
+        @keyframes qPulse {
+            0% { r: 2; opacity: 0.5; fill: var(--accent-secondary); }
+            50% { r: 4; opacity: 1; }
+            100% { r: 1; opacity: 0.3; fill: var(--accent-primary); }
+        }
+        #quantum-art-svg .q-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: qDraw 8s linear infinite;
+            opacity: 0.5;
+        }
+        @keyframes qDraw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* Settings Page */
+        .settings-form label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        .settings-form input[type="text"],
+        .settings-form input[type="email"],
+        .settings-form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #0D1117;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+        }
+        .settings-form input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+
+        /* --- Footer --- */
+        .app-footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: auto; /* Pushes footer to bottom */
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                padding: 15px;
+            }
+            .logo { margin-bottom: 10px; }
+            .main-nav ul {
+                justify-content: center;
+                width: 100%;
+            }
+            .main-nav li { margin: 0 10px; }
+            .main-nav a { padding: 8px; font-size: 0.9rem;}
+            .page-title { font-size: 2rem; }
+            .hero-section h1 { font-size: 2.5rem; }
+            .app-main { padding: 20px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <a href="#home" class="logo">NOVA<span>CORE</span></a>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#dashboard" class="nav-link">Dashboard</a></li>
+                <li><a href="#modules" class="nav-link">Modules</a></li>
+                <li><a href="#quantum" class="nav-link">Quantum Lab</a></li>
+                <li><a href="#settings" class="nav-link">Settings</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main id="app-content" class="app-main">
+        <!-- Content will be loaded here -->
+    </main>
+
+    <footer class="app-footer">
+        <p>© <span id="year"></span> NovaCore Systems. All rights reserved.</p>
+    </footer>
+
+    <!-- Page Templates -->
+    <template id="page-home">
+        <section class="hero-section">
+            <h1>Welcome to <span>NovaCore</span></h1>
+            <p>Pioneering the next generation of interconnected systems and intelligent solutions for a rapidly evolving digital frontier.</p>
+            <a href="#dashboard" class="button">Explore Dashboard</a>
+            <a href="#modules" class="button secondary" style="margin-left:10px;">View Modules</a>
+        </section>
+        <h2 class="page-title">Overview</h2>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Intelligent Design</h3>
+                <p>NovaCore is built from the ground up with scalability and intelligence in mind, adapting to your needs.</p>
+            </div>
+            <div class="card">
+                <h3>Seamless Integration</h3>
+                <p>Connect effortlessly with existing infrastructure and services through our robust API and flexible architecture.</p>
+            </div>
+            <div class="card">
+                <h3>Future-Proof Technology</h3>
+                <p>Leveraging cutting-edge advancements to ensure your platform remains at the forefront of innovation.</p>
+            </div>
+        </div>
+    </template>
+
+    <template id="page-dashboard">
+        <h1 class="page-title">System Dashboard</h1>
+        <div class="card-grid">
+            <div class="card">
+                <h3>Core Processor Load</h3>
+                <p>Current Load: <strong style="color: var(--accent-secondary);">37.5%</strong></p>
+                <p>Avg. Temperature: 42°C</p>
+                <!-- Placeholder for a mini graph or more data -->
+            </div>
+            <div class="card">
+                <h3>Network Throughput</h3>
+                <p>Down: 1.2 Gbps / Up: 875 Mbps</p>
+                <p>Latency: 12ms (Global)</p>
+            </div>
+            <div class="card">
+                <h3>Active Modules</h3>
+                <p>Total: 8 / Active: 6</p>
+                <p><span style="color:var(--accent-secondary)">●</span> Genesis Engine</p>
+                <p><span style="color:var(--accent-secondary)">●</span> Chronos Scheduler</p>
+            </div>
+             <div class="card">
+                <h3>Security Status</h3>
+                <p>System Integrity: <strong style="color: var(--accent-secondary);">Secure</strong></p>
+                <p>Last Threat Scan: 2h ago</p>
+            </div>
+            <div class="card">
+                <h3>Energy Consumption</h3>
+                <p>Current Draw: 250W</p>
+                <p>Efficiency Rating: 98.7%</p>
+            </div>
+            <div class="card">
+                <h3>User Activity</h3>
+                <p>Active Users: 1,204</p>
+                <p>Peak Users (24h): 1,567</p>
+            </div>
+        </div>
+    </template>
+
+    <template id="page-modules">
+        <h1 class="page-title">Available Modules</h1>
+        <div class="card-grid">
+            <div class="card">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2358A6FF' width='48px' height='48px'><path d='M0 0h24v24H0z' fill='none'/><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93s3.05-7.44 7-7.93v15.86zm2-15.86c1.03.13 2 .45 2.87.93L13 6.93V4.07zM13 10.1l5.66-3.39c.6-.36.91-.95.91-1.61 0-1.05-.86-1.91-1.91-1.91-.51 0-.97.2-1.34.54L13 6.96V10.1zm0 3.8l-2.87.93c-.87.48-1.84.8-2.87.93L13 17.07v-3.17zm0 4.03L13 17.07v-3.17l2.87.93c.87.48 1.84.8 2.87.93L13 17.07v3.03z'/></svg>" alt="Genesis Icon" style="margin-bottom:15px;">
+                <h3>Genesis Engine</h3>
+                <p>Core processing and data management module. Handles foundational operations and resource allocation across the system.</p>
+                <button class="button secondary">Details</button>
+            </div>
+            <div class="card">
+                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2358A6FF' width='48px' height='48px'><path d='M0 0h24v24H0z' fill='none'/><path d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/></svg>" alt="Chronos Icon" style="margin-bottom:15px;">
+                <h3>Chronos Scheduler</h3>
+                <p>Advanced task scheduling and automation. Manages workflows, prioritizes processes, and ensures optimal timing.</p>
+                 <button class="button secondary">Details</button>
+            </div>
+            <div class="card">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2358A6FF' width='48px' height='48px'><path d='M0 0h24v24H0V0z' fill='none'/><path d='M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z'/><circle cx='17' cy='12' r='1'/><path d='M7 7h10v2H7v6h5.58c-.27.46-.45.97-.52 1.5H7c-1.66 0-3-1.34-3-3s1.34-3 3-3z'/></svg>" alt="Nexus API" style="margin-bottom:15px;">
+                <h3>Nexus API Gateway</h3>
+                <p>Secure and scalable API management. Facilitates seamless communication between NovaCore and external services.</p>
+                 <button class="button secondary">Details</button>
+            </div>
+            <div class="card">
+                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2358A6FF' width='48px' height='48px'><path d='M0 0h24v24H0V0z' fill='none'/><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z'/></svg>" alt="Aegis Security" style="margin-bottom:15px;">
+                <h3>Aegis Security Suite</h3>
+                <p>Comprehensive security module providing threat detection, intrusion prevention, and data encryption services.</p>
+                <button class="button secondary">Details</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="page-quantum">
+        <h1 class="page-title">Quantum Entanglement Lab</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Visualizing theoretical quantum field interactions. Particle states and path probabilities represented by generative patterns.</p>
+        <svg id="quantum-art-svg" viewBox="0 0 200 100">
+            <!-- Dynamically add elements here -->
+        </svg>
+        <p style="color: var(--text-secondary); font-size:0.9em; text-align:center; margin-top:10px;">Each particle's behavior influences interconnected paths, simulating quantum superposition.</p>
+    </template>
+
+    <template id="page-settings">
+        <h1 class="page-title">System Settings</h1>
+        <div class="card" style="max-width: 600px;">
+            <h3>Configuration</h3>
+            <form class="settings-form">
+                <div>
+                    <label for="sys-name">System Name:</label>
+                    <input type="text" id="sys-name" value="NovaCore Primary Cluster">
+                </div>
+                <div>
+                    <label for="admin-email">Admin Email:</label>
+                    <input type="email" id="admin-email" value="admin@novacore.system">
+                </div>
+                <div>
+                    <label for="theme-mode">Theme Mode:</label>
+                    <select id="theme-mode">
+                        <option value="dark" selected>Dark Mode (Nova)</option>
+                        <option value="light">Light Mode (Legacy)</option>
+                        <option value="system">System Default</option>
+                    </select>
+                </div>
+                <div>
+                    <label>
+                        <input type="checkbox" id="auto-updates" checked>
+                        Enable Automatic Updates
+                    </label>
+                </div>
+                 <div>
+                    <label>
+                        <input type="checkbox" id="beta-features">
+                        Enable Beta Features
+                    </label>
+                </div>
+                <button type="submit" class="button" onclick="event.preventDefault(); alert('Settings Saved (simulation)');">Save Changes</button>
+            </form>
+        </div>
+    </template>
+
+     <template id="page-not-found">
+        <h1 class="page-title">404 - Interface Error</h1>
+        <div class="card" style="text-align:center;">
+            <h3>Page Not Found</h3>
+            <p>The requested resource or data stream could not be located within the NovaCore network. Please check the address or return to a known interface point.</p>
+            <a href="#home" class="button">Return to Home</a>
+        </div>
+    </template>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const appContent = document.getElementById('app-content');
+            const navLinks = document.querySelectorAll('.main-nav .nav-link');
+            const yearSpan = document.getElementById('year');
+            yearSpan.textContent = new Date().getFullYear();
+
+            // --- Simple Router ---
+            function renderPage(pageId) {
+                appContent.classList.add('loading'); // Start fade-out animation
+
+                // Update active nav link
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${pageId}`) {
+                        link.classList.add('active');
+                    }
+                });
+
+                setTimeout(() => {
+                    const template = document.getElementById(`page-${pageId}`);
+                    if (template) {
+                        appContent.innerHTML = ''; // Clear previous content
+                        const content = template.content.cloneNode(true);
+                        appContent.appendChild(content);
+
+                        // Special JS for quantum page if it's loaded
+                        if (pageId === 'quantum') {
+                            initQuantumArt();
+                        }
+
+                    } else {
+                         const notFoundTemplate = document.getElementById('page-not-found');
+                         appContent.innerHTML = '';
+                         appContent.appendChild(notFoundTemplate.content.cloneNode(true));
+                    }
+                    appContent.classList.remove('loading'); // Start fade-in
+                    window.scrollTo(0, 0); // Scroll to top on page change
+                }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-speed').replace('s','')) * 1000 / 2); // Wait for half of transition
+            }
+
+            function handleRouteChange() {
+                let pageId = window.location.hash.substring(1);
+                if (!pageId) {
+                    pageId = 'home'; // Default page
+                    window.location.hash = '#home'; // Set default hash
+                }
+                renderPage(pageId);
+            }
+
+            // Event listeners
+            window.addEventListener('hashchange', handleRouteChange);
+            handleRouteChange(); // Initial page load
+
+
+            // --- Quantum Art SVG (Example) ---
+            function initQuantumArt() {
+                const svg = document.getElementById('quantum-art-svg');
+                if (!svg) return;
+                svg.innerHTML = ''; // Clear previous art
+
+                const numParticles = 15;
+                const numPaths = 5;
+                const width = 200; // viewBox width
+                const height = 100; // viewBox height
+
+                // Create some paths
+                for(let i = 0; i < numPaths; i++) {
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    let d = `M ${Math.random()*width} ${Math.random()*height} Q`;
+                    for(let j=0; j < 2; j++) { // two control points
+                        d += ` ${Math.random()*width} ${Math.random()*height},`;
+                    }
+                    d += ` ${Math.random()*width} ${Math.random()*height}`;
+
+                    path.setAttribute('d', d);
+                    path.setAttribute('stroke', i % 2 === 0 ? 'var(--accent-primary)' : 'var(--accent-secondary)');
+                    path.setAttribute('stroke-width', (Math.random() * 0.5 + 0.2).toFixed(2));
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('class', 'q-path');
+                    path.style.animationDelay = `${(Math.random() * -5).toFixed(2)}s`;
+                    svg.appendChild(path);
+                }
+
+
+                // Create particles
+                for (let i = 0; i < numParticles; i++) {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', Math.random() * width);
+                    circle.setAttribute('cy', Math.random() * height);
+                    circle.setAttribute('r', Math.random() * 2 + 1);
+                    circle.setAttribute('class', 'q-particle');
+                    circle.style.animationDelay = `${(Math.random() * -2).toFixed(2)}s`;
+                    svg.appendChild(circle);
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

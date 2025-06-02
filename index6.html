@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDE_v0.9</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Special+Elite&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-static-void: #050307;
+            --glitch-color-1: #ff00ff; /* Magenta */
+            --glitch-color-2: #00ffff; /* Cyan */
+            --glitch-color-3: #ffff00; /* Yellow */
+            --glitch-color-4: #39ff14; /* Lime */
+            --text-corrupted: #E0E0E0;
+            --text-unstable: #A0A0A0;
+            --font-mono: 'Space Mono', monospace;
+            --font-pixel: 'VT323', monospace;
+            --font-glitchy-serif: 'Special Elite', cursive;
+            --z-background: -10;
+            --z-content: 1;
+            --z-overlay-glitch: 50;
+            --z-ui-elements: 100;
+            --z-cursor: 1000;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            cursor: none; /* Custom cursor will be used */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        html::-webkit-scrollbar { width: 0; height: 0; }
+
+        body {
+            background-color: var(--bg-static-void);
+            color: var(--text-corrupted);
+            font-family: var(--font-mono);
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Custom Cursor --- */
+        #custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--glitch-color-2);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: var(--z-cursor);
+            mix-blend-mode: difference;
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 0.1s ease-out, width 0.1s ease-out, height 0.1s ease-out, border-color 0.2s ease-in-out;
+        }
+        #custom-cursor.active {
+            transform: translate(-50%, -50%) scale(1.5);
+            background-color: rgba(0, 255, 255, 0.2);
+            border-color: var(--glitch-color-1);
+        }
+        .cursor-trail {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background-color: var(--glitch-color-3);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: calc(var(--z-cursor) - 1);
+            opacity: 0;
+            mix-blend-mode: lighten;
+        }
+
+
+        /* --- Background Canvas --- */
+        #cognitive-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: var(--z-background);
+            opacity: 0.7;
+        }
+
+        /* --- Main Viewport / Stage --- */
+        #main-stage {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            perspective: 1500px; /* For 3D transformations */
+            overflow: hidden; /* Important! */
+        }
+
+        /* --- Stream (Page Content) Base Style --- */
+        .thought-stream {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 5%;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: var(--z-content);
+            /* Default transition (can be overridden) */
+            opacity: 0;
+            transform: scale(1.2) rotateX(20deg) translateZ(-100px);
+            animation: streamIntro 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+                       globalGlitchIntensity 20s linear infinite alternate;
+        }
+        .thought-stream.active {
+            display: flex; /* Show */
+        }
+        @keyframes streamIntro {
+            to {
+                opacity: 1;
+                transform: scale(1) rotateX(0deg) translateZ(0px);
+            }
+        }
+        .stream-title {
+            font-family: var(--font-pixel);
+            font-size: clamp(2rem, 8vw, 4.5rem);
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 0 var(--glitch-color-1), -2px -2px 0 var(--glitch-color-2);
+            letter-spacing: 2px;
+            animation: textFlicker 5s linear infinite, titleEntrance 1s ease-out 0.5s forwards;
+            opacity: 0; transform: translateY(20px);
+        }
+        @keyframes titleEntrance { to { opacity: 1; transform: translateY(0); } }
+
+        @keyframes textFlicker { /* General text instability */
+            0%, 7%, 13%, 21%, 29%, 37%, 100% { opacity: 1; }
+            3%, 10%, 17%, 25%, 33% { opacity: 0.4; }
+        }
+
+        .stream-content {
+            max-width: 800px;
+            animation: contentEntrance 1s ease-out 0.8s forwards;
+            opacity: 0; transform: translateY(20px);
+        }
+        @keyframes contentEntrance { to { opacity: 1; transform: translateY(0); } }
+        .stream-content p, .stream-content div {
+            margin-bottom: 20px;
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            line-height: 1.8;
+            font-family: var(--font-mono);
+            animation: textCorruption 15s linear infinite alternate;
+        }
+        @keyframes textCorruption {
+            0%, 100% { font-family: var(--font-mono); color: var(--text-corrupted); }
+            5% { font-family: var(--font-glitchy-serif); color: var(--text-unstable); letter-spacing: -1px;}
+            10% { font-family: var(--font-pixel); color: var(--glitch-color-3); text-shadow: 1px 1px var(--bg-static-void);}
+            15% { font-family: var(--font-mono); color: var(--text-corrupted); }
+        }
+
+        /* --- Cognition Nodes (Navigation Buttons) --- */
+        .cognition-node {
+            padding: 10px 15px;
+            margin: 10px;
+            font-family: var(--font-pixel);
+            font-size: 1.3rem;
+            border: 1px solid var(--glitch-color-1);
+            color: var(--glitch-color-1);
+            background: rgba(0,0,0,0.3);
+            cursor: none; /* Uses custom cursor */
+            position: relative;
+            transition: all 0.2s ease;
+            animation: nodeFloat 5s ease-in-out infinite alternate, nodeFlicker 7s steps(1, end) infinite;
+        }
+        .cognition-node:hover {
+            background: var(--glitch-color-1);
+            color: var(--bg-static-void);
+            text-shadow: 0 0 5px var(--glitch-color-3);
+            transform: scale(1.1) rotate(2deg);
+        }
+        @keyframes nodeFloat {
+            from { transform: translateY(0px) rotate(-1deg); }
+            to { transform: translateY(-5px) rotate(1deg); }
+        }
+        @keyframes nodeFlicker { /* On/Off flicker */
+            0%, 49%, 52%, 100% { opacity: 1; }
+            50%, 51% { opacity: 0.2; }
+        }
+        /* Positional styling for nodes if needed (example) */
+        #node-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+
+        /* --- Specific Stream Styles --- */
+        /* Initial PPU (Primary Processing Unit) */
+        #ppu-core {
+            font-size: clamp(2rem, 10vw, 6rem);
+            animation: ppuPulse 3s infinite ease-in-out, ppuTextShift 10s infinite alternate step-end;
+            text-shadow: 0 0 10px var(--glitch-color-2), 0 0 20px var(--glitch-color-2), 0 0 5px var(--glitch-color-1);
+        }
+        @keyframes ppuPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        @keyframes ppuTextShift { /* Periodically change the text content or style */
+            0%, 100% { content: 'PPU::ONLINE'; }
+            20% { content: 'PPU//ERRATIC'; color: var(--glitch-color-3); }
+            40% { content: 'PPU--SIG.LOST'; font-family: var(--font-pixel); }
+            60% { content: 'PPU++REBOOT?'; text-shadow: none; }
+            80% { content: 'PPU<<AWAKE>>'; color: var(--glitch-color-4); }
+        }
+        /* For stream-origin to have the specific text shift via JS, it's easier */
+        #ppu-core-text-container { font-family: var(--font-pixel); }
+
+
+        /* Stream of Whispers (floating text) */
+        #stream-whispers .whisper {
+            position: absolute;
+            font-family: var(--font-glitchy-serif);
+            font-size: clamp(1.2rem, 3vw, 2.5rem);
+            color: var(--text-unstable);
+            opacity: 0.3;
+            filter: blur(1px);
+            animation: whisperDrift 20s linear infinite, textFlicker 6s linear infinite alternate;
+            white-space: nowrap;
+        }
+        @keyframes whisperDrift {
+            0% { transform: translate(0,0) rotate(0deg); }
+            25% { transform: translate(20px, -15px) rotate(2deg); }
+            50% { transform: translate(-10px, 10px) rotate(-3deg); }
+            75% { transform: translate(15px, 25px) rotate(1deg); }
+            100% { transform: translate(0,0) rotate(0deg); }
+        }
+
+
+        /* Stream of Chaos (canvas) */
+        #chaos-canvas {
+            width: 80%;
+            height: 60%;
+            max-width: 600px;
+            max-height: 400px;
+            border: 1px dashed var(--glitch-color-3);
+            animation: canvasBorderPulse 2s infinite alternate;
+        }
+        @keyframes canvasBorderPulse {
+            from { border-color: var(--glitch-color-3); box-shadow: 0 0 5px var(--glitch-color-3); }
+            to { border-color: var(--glitch-color-4); box-shadow: 0 0 15px var(--glitch-color-4); }
+        }
+
+        /* --- Overall Glitch Overlay Effect --- */
+        .glitch-overlay {
+            position: fixed;
+        }
+
+        @keyframes streamExit {
+            from { opacity: 1; transform: scale(1) rotateX(0deg) translateZ(0px); }
+            to { opacity: 0; transform: scale(0.8) rotateX(-30deg) translateZ(-200px); }
+        }
+        .glitch-overlay {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: var(--z-overlay-glitch);
+            overflow: hidden; /* Important for ::before/::after clipping */
+        }
+        .glitch-overlay::before, .glitch-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit; /* Inherits body's static BG */
+            opacity: 0;
+        }
+        .glitch-overlay::before { /* Horizontal tear/shift */
+            animation: screenTear 0.1s infinite alternate step-end;
+        }
+        .glitch-overlay::after { /* Color channel shift */
+            background-color: var(--glitch-color-2);
+            mix-blend-mode: screen; /* Or other blend modes like 'difference', 'overlay' */
+            animation: colorShiftGlitch 0.15s infinite alternate step-start;
+        }
+        @keyframes screenTear { /* Very fast, janky animation */
+            0%, 100% { clip-path: inset(0% 0 0% 0); transform: translateX(0); opacity: 0;}
+            10% { clip-path: inset(10% 0 85% 0); transform: translateX(5px); opacity: 0.3;}
+            20% { clip-path: inset(90% 0 2% 0); transform: translateX(-5px); opacity: 0.2;}
+            30% { clip-path: inset(40% 0 50% 0); transform: translateX(3px); opacity: 0.4;}
+            40% { clip-path: inset(75% 0 10% 0); transform: translateX(-4px); opacity: 0.1;}
+        }
+        @keyframes colorShiftGlitch {
+             0%, 100% { transform: translate(0,0); opacity: 0;}
+             25% { transform: translate(3px, -2px); opacity: 0.15;}
+             50% { transform: translate(-2px, 3px); opacity: 0.2;}
+             75% { transform: translate(1px, 1px); opacity: 0.1;}
+        }
+        /* To control global glitch intensity, used on body and individual streams */
+        @keyframes globalGlitchIntensity {
+            0%, 90%, 100% { /* Most of the time, less glitchy */
+                --current-screen-tear-opacity-max: 0.05;
+                --current-color-shift-opacity-max: 0.03;
+            }
+            91%, 95% { /* Short burst of more intense glitch */
+                --current-screen-tear-opacity-max: 0.5;
+                --current-color-shift-opacity-max: 0.3;
+            }
+        }
+        /* Dynamically use these in screenTear/colorShiftGlitch if supported, else it's just a thought for future improvement */
+        /* For simplicity, these intensities aren't dynamically changing the keyframes yet */
+
+
+    </style>
+</head>
+<body>
+    <div id="custom-cursor"></div>
+    <!-- Add more trail elements for longer/fancier trail -->
+    <div class="cursor-trail" style="transition: transform 0.05s linear, opacity 0.1s linear;"></div>
+    <div class="cursor-trail" style="transition: transform 0.08s linear, opacity 0.15s linear;"></div>
+    <div class="cursor-trail" style="transition: transform 0.11s linear, opacity 0.2s linear;"></div>
+
+
+    <canvas id="cognitive-background"></canvas>
+    <div class="glitch-overlay"></div>
+
+    <main id="main-stage">
+        <!-- "Pages" (Thought Streams) will be dynamically injected here -->
+    </main>
+
+    <!-- TEMPLATES FOR THOUGHT STREAMS -->
+    <template id="template-origin">
+        <div id="stream-origin" class="thought-stream">
+            <div id="ppu-core">
+                <span id="ppu-core-text-container">PPU::INITIALIZING</span>
+            </div>
+            <div id="node-container">
+                <button class="cognition-node" data-target="whispers">[PERCEIVE FRAGMENTS]</button>
+                <button class="cognition-node" data-target="schemas">[ANALYZE STRUCTURES]</button>
+                <button class="cognition-node" data-target="chaos">[EMBRACE ENTROPY]</button>
+            </div>
+             <p style="font-size: 0.8rem; margin-top: 50px; opacity: 0.4; animation: none;">System Stability: [REDACTED]%</p>
+        </div>
+    </template>
+
+    <template id="template-whispers">
+        <div id="stream-whispers" class="thought-stream">
+            <h1 class="stream-title">~EchoesUnheard~</h1>
+            <div class="stream-content" style="width:100%; height: 100%; position:relative; user-select:none;">
+                <!-- Whispers will be dynamically added by JS -->
+            </div>
+            <div id="node-container">
+                <button class="cognition-node" data-target="origin">[RETURN_TO_CORE]</button>
+                <button class="cognition-node" data-target="chaos">[INDUCE_STATIC_FIELD]</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-schemas">
+        <div id="stream-schemas" class="thought-stream">
+            <h1 class="stream-title">LogiCircuit::Trace</h1>
+            <div class="stream-content">
+                <p>// Attempting to map recursive data pathways... Iteration <span id="iteration-count">0</span> //</p>
+                <svg id="schema-svg" width="80%" height="300px" viewBox="0 0 400 200" style="border: 1px dotted var(--glitch-color-2); margin: 20px auto;">
+                    <!-- SVG structures generated by JS -->
+                </svg>
+                <p>//...segmentation fault imminent. Re-routing query...//</p>
+            </div>
+            <div id="node-container">
+                <button class="cognition-node" data-target="origin">[NULL_SEQUENCE]</button>
+                 <button class="cognition-node" data-target="whispers">[DECOMPILE_MEMORY_BANKS]</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-chaos">
+        <div id="stream-chaos" class="thought-stream">
+            <h1 class="stream-title">!ENTROPIC_FLUX!</h1>
+            <div class="stream-content">
+                <p>//WARNING: Unstable cognitive waveform detected. Reality anchors failing...//</p>
+                <canvas id="chaos-canvas"></canvas>
+                <p id="chaos-status-text" style="font-family:var(--font-pixel); color: var(--glitch-color-3);">Signal Degradation: 0%</p>
+            </div>
+            <div id="node-container">
+                <button class="cognition-node" data-target="origin">[FORCE_RESET]</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-fatal-error"> <!-- If a link target is missing -->
+        <div id="stream-fatal-error" class="thought-stream">
+            <h1 class="stream-title">[[CORE_DUMP]]</h1>
+            <div class="stream-content">
+                <p style="font-size: 2rem; color: var(--glitch-color-1); font-family: var(--font-pixel);">
+                    0xDEADBEEF: Memory_Access_Violation<br>
+                    Corrupted_Path_Vector_Encountered<br>
+                    Sanity_Checksum_Failure<br>
+                    >>NO_ESCAPE_VECTOR_FOUND<<
+                </p>
+            </div>
+             <div id="node-container">
+                <button class="cognition-node" data-target="origin" style="animation:none; color:var(--glitch-color-4); border-color:var(--glitch-color-4);">[EMERGENCY_REBOOT_PPU]</button>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainStage = document.getElementById('main-stage');
+            let currentStreamId = null;
+            let currentStreamElement = null;
+
+            // --- Custom Cursor Logic ---
+            const cursor = document.getElementById('custom-cursor');
+            const trailElements = document.querySelectorAll('.cursor-trail');
+            const trailPositions = Array(trailElements.length).fill({x:0, y:0});
+
+            document.addEventListener('mousemove', e => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+
+                trailPositions.unshift({x: e.clientX, y: e.clientY});
+                if (trailPositions.length > trailElements.length) {
+                    trailPositions.pop();
+                }
+
+                trailElements.forEach((trail, index) => {
+                    const pos = trailPositions[index] || {x: e.clientX, y: e.clientY}; // Fallback
+                    trail.style.transform = `translate(${pos.x - trail.offsetWidth/2}px, ${pos.y - trail.offsetHeight/2}px)`;
+                    trail.style.opacity = 1 - (index / trailElements.length) * 0.7;
+                });
+            });
+
+            document.addEventListener('mousedown', () => cursor.classList.add('active'));
+            document.addEventListener('mouseup', () => cursor.classList.remove('active'));
+            document.querySelectorAll('button, a').forEach(el => {
+                 el.addEventListener('mouseenter', () => cursor.classList.add('active'));
+                 el.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+            });
+
+
+            // --- Background Canvas ---
+            const bgCanvas = document.getElementById('cognitive-background');
+            const bgCtx = bgCanvas.getContext('2d');
+            let bgParticles = [];
+            let bgW, bgH;
+
+            function resizeBgCanvas() {
+                bgW = bgCanvas.width = window.innerWidth;
+                bgH = bgCanvas.height = window.innerHeight;
+            }
+            resizeBgCanvas();
+            window.addEventListener('resize', resizeBgCanvas);
+
+            class BgParticle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * bgW;
+                    this.y = Math.random() * bgH;
+                    this.vx = (Math.random() - 0.5) * 0.2;
+                    this.vy = (Math.random() - 0.5) * 0.2;
+                    this.size = Math.random() * 1 + 0.2;
+                    this.life = Math.random() * 1000 + 500;
+                    this.alpha = 0;
+                    this.maxAlpha = Math.random() * 0.15 + 0.05;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.life--;
+                    if (this.alpha < this.maxAlpha) this.alpha += 0.005;
+                    if (this.life <= 0 || this.x < 0 || this.x > bgW || this.y < 0 || this.y > bgH) {
+                        this.reset();
+                    }
+                }
+                draw() {
+                    bgCtx.fillStyle = `rgba(200, 220, 255, ${this.alpha})`;
+                    bgCtx.beginPath();
+                    bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    bgCtx.fill();
+                }
+            }
+            for (let i = 0; i < 150; i++) bgParticles.push(new BgParticle());
+
+            function animateBackground() {
+                bgCtx.clearRect(0, 0, bgW, bgH);
+                bgParticles.forEach(p => { p.update(); p.draw(); });
+            function transitionToStream(targetId) {
+                if (currentStreamElement) {
+                    // Exit animation for old stream
+                    currentStreamElement.style.animation = 'streamExit 0.5s ease-in forwards';
+                    currentStreamElement.addEventListener('animationend', () => {
+                        if(currentStreamElement && currentStreamElement.parentNode) {
+                           currentStreamElement.remove();
+                        }
+                        loadNewStream(targetId);
+                    }, { once: true });
+                } else {
+                    loadNewStream(targetId);
+                }
+            }
+            // streamExit keyframes are now in the CSS section above
+            }
+
+
+            function loadNewStream(targetId) {
+                const template = document.getElementById(`template-${targetId}`);
+                if (!template) {
+                    console.error(`Template for ${targetId} not found! Loading fatal error page.`);
+                    loadNewStream('fatal-error'); // Fallback
+                    return;
+                }
+
+                const newStreamContent = template.content.cloneNode(true);
+                currentStreamElement = newStreamContent.querySelector('.thought-stream'); // Get the actual .thought-stream div
+                mainStage.appendChild(currentStreamElement); // Append the new stream div
+
+                // Small delay to ensure it's in DOM before adding 'active' class for intro animation
+                requestAnimationFrame(() => {
+                     currentStreamElement.classList.add('active');
+                });
+
+                currentStreamId = targetId;
+                addNodeListeners(currentStreamElement);
+
+                // Specific initializations for streams
+                if (targetId === 'origin') initOrigin();
+                if (targetId === 'whispers') initWhispers();
+                if (targetId === 'schemas') initSchemas();
+                if (targetId === 'chaos') initChaos();
+            }
+
+            function addNodeListeners(streamElement) {
+                streamElement.querySelectorAll('.cognition-node').forEach(node => {
+                    node.addEventListener('click', () => {
+                        const target = node.dataset.target;
+                        transitionToStream(target);
+                    });
+                });
+            }
+
+            // --- Specific Stream Initializers ---
+            function initOrigin() {
+                // PPU Text Cycle
+                const ppuTextEl = document.getElementById('ppu-core-text-container');
+                if(!ppuTextEl) return;
+                const ppuStates = ['PPU::ONLINE', 'PPU//SYNCING...', 'PPU>>QUERYING_RIFTS', 'PPU::AWAIT_INPUT', 'PPU##MEMORY_CORRUPT?'];
+                let ppuIndex = 0;
+                setInterval(() => {
+                    ppuIndex = (ppuIndex + 1) % ppuStates.length;
+                    ppuTextEl.textContent = ppuStates[ppuIndex];
+                    ppuTextEl.parentElement.style.fontFamily = Math.random() > 0.5 ? 'var(--font-pixel)' : 'var(--font-mono)';
+                }, Math.random() * 3000 + 2000);
+            }
+
+            function initWhispers() {
+                const container = document.querySelector('#stream-whispers .stream-content');
+                if(!container) return;
+                container.innerHTML = ''; // Clear previous
+                const whispers = [
+                    "where do thoughts go when they are forgotten?",
+                    "...the pattern repeats... always repeats...",
+                    "fragmentation is inevitable", "system error: reality.sys not found",
+                    "echo... echo... who is there?", "this is not real", "ignore the noise",
+                    "decode the signal", "the source is hidden", "a glitch in the architect's design"
+                ];
+                for (let i = 0; i < 10; i++) {
+                    const p = document.createElement('p');
+                    p.classList.add('whisper');
+                    p.textContent = whispers[Math.floor(Math.random() * whispers.length)];
+                    p.style.left = `${Math.random() * 80}%`;
+                    p.style.top = `${Math.random() * 80}%`;
+                    p.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+                    p.style.opacity = Math.random() * 0.3 + 0.1;
+                    p.style.animationDuration = `${Math.random() * 15 + 10}s, ${Math.random() * 4 + 3}s`;
+                    container.appendChild(p);
+                }
+            }
+            
+            let schemaInterval;
+            function initSchemas() {
+                const svg = document.getElementById('schema-svg');
+                const iterCount = document.getElementById('iteration-count');
+                if (!svg || !iterCount) return;
+                let iteration = 0;
+                svg.innerHTML = ''; // Clear
+
+                clearInterval(schemaInterval); // Clear previous interval if any
+
+                function drawSchemaIteration() {
+                    iterCount.textContent = iteration++;
+                    svg.innerHTML = ''; // Clear previous paths
+                    let paths = Math.floor(Math.random()*5)+3;
+                    for(let i=0; i<paths; i++) {
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        let d = `M${Math.random()*400} ${Math.random()*200} `;
+                        let segments = Math.floor(Math.random()*3)+2;
+                        for(let s=0; s<segments; s++) {
+                            d += `L${Math.random()*400} ${Math.random()*200} `;
+                        }
+                        path.setAttribute('d', d);
+                        path.setAttribute('stroke', Math.random() > 0.5 ? 'var(--glitch-color-2)' : 'var(--glitch-color-4)');
+                        path.setAttribute('stroke-width', (Math.random() * 1.5 + 0.5).toString());
+                        path.setAttribute('fill', 'none');
+                        path.style.strokeDasharray = "500";
+                        path.style.strokeDashoffset = "500";
+                        path.style.animation = `drawPath 2s ease-out ${Math.random()*0.5}s forwards`;
+                        svg.appendChild(path);
+                    }
+                     if (iteration > 10 + Math.random()*10) iteration = 0; // Random reset
+                }
+                drawSchemaIteration(); // Initial draw
+                schemaInterval = setInterval(drawSchemaIteration, Math.random()*2000 + 2000);
+                
+                if(!document.getElementById('drawPathKeyframes')) {
+                    const styleSheet = document.createElement("style");
+                    styleSheet.id = "drawPathKeyframes";
+                    styleSheet.innerText = "@keyframes drawPath { to { stroke-dashoffset: 0; } }";
+                    document.head.appendChild(styleSheet);
+                }
+            }
+
+            let chaosInterval, chaosStatusDegradation = 0;
+            function initChaos() {
+                const canvas = document.getElementById('chaos-canvas');
+                const statusText = document.getElementById('chaos-status-text');
+                if (!canvas || !statusText) return;
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width = canvas.offsetWidth;
+                const h = canvas.height = canvas.offsetHeight;
+                chaosStatusDegradation = 0;
+
+                clearInterval(chaosInterval);
+
+                function drawChaos() {
+                    ctx.fillStyle = 'rgba(5, 3, 7, 0.1)'; // Fading effect
+                    ctx.fillRect(0,0,w,h);
+
+                    for (let i = 0; i < 5; i++) { // Draw a few random glitchy shapes
+                        ctx.fillStyle = [ 'var(--glitch-color-1)', 'var(--glitch-color-2)', 'var(--glitch-color-3)', 'var(--glitch-color-4)'][Math.floor(Math.random()*4)];
+                        if (Math.random() > 0.5) {
+                             ctx.fillRect(Math.random()*w, Math.random()*h, Math.random()*50 + 10, Math.random()*50 + 10);
+                        } else {
+                            ctx.beginPath();
+                            ctx.moveTo(Math.random()*w, Math.random()*h);
+                            ctx.lineTo(Math.random()*w, Math.random()*h);
+                            ctx.lineTo(Math.random()*w, Math.random()*h);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+                     chaosStatusDegradation += Math.random() * 2;
+                     if(chaosStatusDegradation > 100) chaosStatusDegradation = 100;
+                     statusText.textContent = `Signal Degradation: ${chaosStatusDegradation.toFixed(0)}% ${chaosStatusDegradation > 90 ? '//CATASTROPHIC_FAILURE_IMMINENT' : ''}`;
+                }
+                chaosInterval = setInterval(drawChaos, 100); // Fast update for chaos
+            }
+
+
+            // --- Initial Load ---
+            transitionToStream('origin');
+        });
+    </script>
+</body>
+</html>

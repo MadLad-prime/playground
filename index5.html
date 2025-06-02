@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoWeave Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;700&family=Audiowide&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep-space: #030508;
+            --bg-interface: rgba(10, 20, 40, 0.5); /* Semi-transparent */
+            --border-glitch: rgba(0, 255, 255, 0.3);
+            --text-primary: #d0e0ff;
+            --text-secondary: #80a0d0;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff00ff;
+            --accent-lime: #39ff14;
+            --glow-cyan: 0 0 5px var(--accent-cyan), 0 0 10px var(--accent-cyan), 0 0 15px rgba(0, 255, 255, 0.7);
+            --glow-magenta: 0 0 5px var(--accent-magenta), 0 0 10px var(--accent-magenta), 0 0 15px rgba(255, 0, 255, 0.7);
+            --font-display: 'Audiowide', cursive;
+            --font-body: 'Rajdhani', sans-serif;
+            --transition-fast: 0.3s;
+            --transition-page: 0.8s;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE 10+ */
+        }
+        html::-webkit-scrollbar { /* WebKit */
+            width: 0;
+            height: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep-space);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.7;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Critical for full-screen pages */
+            perspective: 1000px; /* For 3D-ish effects */
+            background-image:
+                radial-gradient(ellipse at 70% 30%, rgba(0, 255, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(ellipse at 30% 70%, rgba(255, 0, 255, 0.05) 0%, transparent 40%),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><g fill-opacity="0.03" fill="%23d0e0ff"><circle cx="25" cy="25" r="1.5"/><circle cx="75" cy="25" r="1"/><circle cx="25" cy="75" r="1"/><circle cx="75" cy="75" r="1.5"/><path d="M0 50 H100 M50 0 V100" stroke-width="0.5"/></g></svg>');
+            background-attachment: fixed;
+        }
+
+        /* --- Preloader / Transition Overlay --- */
+        #transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-deep-space);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-page) ease-in-out, visibility 0s var(--transition-page);
+        }
+        #transition-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid transparent;
+            border-top-color: var(--accent-cyan);
+            border-right-color: var(--accent-magenta);
+            border-radius: 50%;
+            animation: spin 1s linear infinite, colorShift 4s linear infinite alternate;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes colorShift {
+            0%, 100% { border-top-color: var(--accent-cyan); border-right-color: var(--accent-magenta); }
+            50% { border-top-color: var(--accent-lime); border-right-color: var(--accent-cyan); }
+        }
+
+        /* --- Main App Wrapper --- */
+        .app-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column; /* Or row for side nav */
+            position: relative;
+        }
+
+        /* --- Temporal Core Navigation --- */
+        #temporal-core-nav {
+            position: fixed;
+            bottom: 30px; /* Or top, or side */
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+            background: rgba(10, 20, 40, 0.3);
+            padding: 10px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        .nav-node {
+            width: 45px;
+            height: 45px;
+            background-color: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all var(--transition-fast) ease-out;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            position: relative;
+        }
+        .nav-node svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-cyan);
+            transition: fill var(--transition-fast);
+        }
+        .nav-node:hover {
+            background-color: rgba(0, 255, 255, 0.3);
+            box-shadow: var(--glow-cyan);
+            transform: translateY(-3px) scale(1.1);
+        }
+        .nav-node.active {
+            background-color: var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+            transform: scale(1.15);
+        }
+        .nav-node.active svg {
+            fill: var(--bg-deep-space);
+        }
+        .nav-node .tooltip {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent-cyan);
+            color: var(--bg-deep-space);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0s 0.2s;
+            pointer-events: none;
+        }
+        .nav-node:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s;
+        }
+
+        /* --- Page Content Area --- */
+        #page-content-area {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            position: relative; /* For absolute positioning of pages */
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 5% 100px; /* Space for nav at bottom */
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.95) translateZ(-50px);
+            /* background: rgba(5,8,13,0.1); backdrop-filter: blur(2px); */
+            overflow-y: auto; /* Enable scroll within a page if content overflows */
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-cyan) transparent;
+            transition: opacity calc(var(--transition-page) * 0.8) ease-out calc(var(--transition-page) * 0.2),
+                        transform calc(var(--transition-page) * 0.8) cubic-bezier(0.165, 0.84, 0.44, 1) calc(var(--transition-page) * 0.2),
+                        visibility 0s calc(var(--transition-page));
+        }
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateZ(0);
+            transition-delay: 0s;
+        }
+        .page-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-primary);
+            text-shadow: var(--glow-cyan);
+            animation: textGlitch 8s infinite alternate, fadeInGlow 1s ease-out forwards;
+            letter-spacing: 2px;
+        }
+
+        @keyframes fadeInGlow {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes textGlitch {
+            0%, 100% { text-shadow: var(--glow-cyan), 0 0 0 transparent; color: var(--text-primary); }
+            2% { text-shadow: var(--glow-magenta), -2px 0 var(--accent-lime), 2px 0 var(--accent-cyan); color: var(--accent-lime); }
+            4% { text-shadow: var(--glow-cyan), 0 0 0 transparent; color: var(--text-primary); }
+            6% { text-shadow: var(--glow-cyan), 1px 1px var(--accent-magenta); transform: skewX(-2deg); }
+            8%, 12% { text-shadow: var(--glow-cyan), 0 0 0 transparent; transform: skewX(0deg); }
+            10% { text-shadow: var(--glow-magenta), 3px -2px var(--accent-lime); color: var(--text-secondary); transform: skewX(3deg); }
+        }
+
+        /* Generic content styling */
+        .content-panel {
+            background: var(--bg-interface);
+            border: 1px solid var(--border-glitch);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 15px rgba(0,255,255,0.1), inset 0 0 10px rgba(0,255,255,0.05);
+            animation: panelAppear 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        @keyframes panelAppear {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Stagger panel appearances */
+        .page.active .content-panel:nth-child(1) { animation-delay: 0.2s; }
+        .page.active .content-panel:nth-child(2) { animation-delay: 0.35s; }
+        .page.active .content-panel:nth-child(3) { animation-delay: 0.5s; }
+
+
+        .content-panel h3 {
+            font-family: var(--font-display);
+            color: var(--accent-cyan);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px var(--accent-cyan);
+        }
+        .content-panel p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+        .content-panel code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+            color: var(--accent-lime);
+        }
+
+        /* Button Style */
+        .glitch-button {
+            display: inline-block;
+            padding: 12px 25px;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            letter-spacing: 1px;
+            color: var(--accent-cyan);
+            background-color: transparent;
+            border: 1px solid var(--accent-cyan);
+            border-radius: 4px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .glitch-button:hover { color: var(--bg-deep-space); }
+        .glitch-button::before, .glitch-button::after {
+            content: attr(data-text); /* Or fixed text like 'ACTIVATE' */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .glitch-button::before { /* The 'fill' effect */
+            color: var(--bg-deep-space);
+            background-color: var(--accent-cyan);
+            clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); /* Start collapsed */
+            transition: clip-path 0.4s cubic-bezier(0.7, 0, 0.3, 1);
+        }
+        .glitch-button:hover::before {
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        }
+        .glitch-button::after { /* Glitch text effect */
+            opacity: 0;
+            color: var(--accent-magenta);
+            text-shadow: -1px -1px 0 var(--accent-lime), 1px 1px 0 var(--accent-cyan);
+            animation: buttonGlitch 3s infinite step-end;
+        }
+        .glitch-button:hover::after { animation-play-state: running; }
+        @keyframes buttonGlitch {
+            0%, 100% { opacity: 0; transform: translate(0,0); }
+            5% { opacity: 1; transform: translate(2px, -3px); }
+            10% { opacity: 0; transform: translate(0,0); }
+            15% { opacity: 1; transform: translate(-3px, 2px); }
+            20% { opacity: 0; transform: translate(0,0); }
+        }
+
+        /* Anomalies Page - Canvas */
+        #anomaly-canvas {
+            width: 100%;
+            max-width: 800px;
+            height: 450px; /* Adjust as needed */
+            display: block;
+            margin: 0 auto 20px auto;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-glitch);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .page { padding: 40px 5% 120px; } /* More bottom padding for nav */
+            .page-title { font-size: clamp(2rem, 8vw, 3rem); }
+            #temporal-core-nav {
+                bottom: 20px;
+                padding: 8px 15px;
+                gap: 10px;
+            }
+            .nav-node { width: 40px; height: 40px; }
+            .nav-node svg { width: 20px; height: 20px; }
+        }
+
+        /* SPECIFIC PAGE CONTENT LAYOUTS */
+        #page-nexus .nexus-core-viz {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 300px; margin-bottom: 30px;
+        }
+        #nexus-svg {
+            width: clamp(200px, 40vw, 350px);
+            height: auto;
+            filter: drop-shadow(var(--glow-cyan));
+            overflow: visible; /* For path animations */
+        }
+        #nexus-svg .n-ring {
+            fill: none;
+            stroke: var(--accent-cyan);
+            stroke-width: 0.5;
+            opacity: 0.6;
+            transform-origin: center;
+            animation: rotateRing 20s linear infinite, pulseRing 3s ease-in-out infinite alternate;
+        }
+        #nexus-svg .n-ring:nth-child(2) { animation-delay: -5s; stroke: var(--accent-magenta); opacity: 0.4; animation-duration: 25s; }
+        #nexus-svg .n-ring:nth-child(3) { animation-delay: -10s; stroke: var(--accent-lime); opacity: 0.3; animation-duration: 30s; }
+
+        @keyframes rotateRing { to { transform: rotate(360deg); } }
+        @keyframes pulseRing {
+            from { stroke-width: 0.3; opacity: 0.2; }
+            to { stroke-width: 0.7; opacity: 0.8; }
+        }
+        #nexus-svg .n-spark {
+            fill: white;
+            animation: sparkAppear 4s infinite;
+            opacity: 0;
+        }
+        #nexus-svg .n-spark:nth-child(odd) { animation-delay: -1s; fill: var(--accent-magenta); }
+        #nexus-svg .n-spark:nth-child(even) { animation-delay: -2s; fill: var(--accent-lime); }
+
+        @keyframes sparkAppear {
+            0%, 100% { opacity: 0; r:1;}
+            20% { opacity: 1; r:2.5; }
+            40% { opacity: 0; r:1;}
+        }
+
+    </style>
+</head>
+<body>
+    <div id="transition-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="app-wrapper">
+        <nav id="temporal-core-nav">
+            <a href="#nexus" class="nav-node" data-page="nexus" title="Nexus Hub">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"></path></svg>
+                <span class="tooltip">NEXUS</span>
+            </a>
+            <a href="#echoes" class="nav-node" data-page="echoes" title="Temporal Echoes">
+                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"></path></svg>
+                <span class="tooltip">ECHOES</span>
+            </a>
+            <a href="#horizons" class="nav-node" data-page="horizons" title="Future Horizons">
+                 <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.41 0-8 3.59-8 8s3.59 8 8 8c1.94 0 3.71-.71 5.13-1.88L14.41 16H12v-2h6v6l-2.35-2.35C14.19 19.28 11.23 18.15 9 15.98s-3.28-5.19-1.98-7.74 4.34-4.13 6.98-3.24L17.65 6.35z"></path></svg>
+                <span class="tooltip">HORIZONS</span>
+            </a>
+            <a href="#anomalies" class="nav-node" data-page="anomalies" title="Observed Anomalies">
+                <svg viewBox="0 0 24 24"><path d="M20.71 12.29l-2.12-2.12a1 1 0 00-1.42 0l-.71.71-2.12-2.12a1 1 0 00-1.42 0l-1.41 1.41L10.1 8.75a1 1 0 00-1.42 0L6.56 10.88a1 1 0 000 1.41l2.12 2.12-2.12 2.12a1 1 0 000 1.41L8.68 20a1 1 0 001.41 0l2.12-2.12 2.12 2.12a1 1 0 001.41 0l2.12-2.12.71.71a1 1 0 001.42 0l2.12-2.12a1 1 0 000-1.42zM12 15.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+                <span class="tooltip">ANOMALIES</span>
+            </a>
+            <a href="#codex" class="nav-node" data-page="codex" title="Data Codex">
+                 <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"></path></svg>
+                <span class="tooltip">CODEX</span>
+            </a>
+        </nav>
+
+        <main id="page-content-area">
+            <!-- Dynamic Page Content Here -->
+        </main>
+    </div>
+
+    <!-- PAGE TEMPLATES -->
+    <template id="template-nexus">
+        <div id="page-nexus" class="page">
+            <h1 class="page-title">NEXUS :: CORE</h1>
+             <div class="nexus-core-viz">
+                 <svg id="nexus-svg" viewBox="0 0 100 100">
+                    <circle class="n-ring" cx="50" cy="50" r="20"/>
+                    <circle class="n-ring" cx="50" cy="50" r="30"/>
+                    <circle class="n-ring" cx="50" cy="50" r="40"/>
+                    <circle class="n-spark" cx="30" cy="50" r="2"/>
+                    <circle class="n-spark" cx="70" cy="50" r="1.5"/>
+                    <circle class="n-spark" cx="50" cy="30" r="1.8"/>
+                    <circle class="n-spark" cx="50" cy="70" r="2.2"/>
+                </svg>
+            </div>
+            <div class="content-panel" style="text-align:center;">
+                <h3>Temporal Confluence Detected</h3>
+                <p>You are at the ChronoWeave Nexus. From this point, divergent timelines and echoic fragments can be accessed. Proceed with caution: temporal stability is not guaranteed.</p>
+                <button class="glitch-button" data-text="SCAN RIFTS" onclick="navigateToPage('echoes')">SCAN RIFTS</button>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-echoes">
+        <div id="page-echoes" class="page">
+            <h1 class="page-title">ECHOES :: FRAGMENTS</h1>
+            <div class="content-panel">
+                <h3>Log Entry #734.Alpha</h3>
+                <p>Retrieved Data: Fragmented sensor readings indicate a reality bifurcation event approximately 3.7 kilocycles ago. Primary subject: "Project Sundial". Integrity: <code>37%</code>. Source echo decaying rapidly.</p>
+            </div>
+            <div class="content-panel">
+                <h3>Signal Ghost AX-09</h3>
+                <p>Nature: Repetitive, structured EM burst. Origin unknown. Decoded payload suggests coordinates to a non-existent star system. Data exhibits significant temporal shear. Warning: Memetic hazard potential <code>LOW</code>.</p>
+            </div>
+             <div class="content-panel">
+                <h3>The "Silent Cartographer" Anomaly</h3>
+                <p>Observation: A period of total chronometric silence across Quadrant Gamma-7. Duration: <code>42.17 standard units</code>. No pre- or post-event tachyonic signatures detected. All attempts to map this void result in corrupted data. Awaiting further analysis.</p>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-horizons">
+        <div id="page-horizons" class="page">
+            <h1 class="page-title">HORIZONS :: PROJECTIONS</h1>
+            <div class="content-panel">
+                <h3>Projected Event: Nexus Alignment</h3>
+                <p>ETA: <code>T-minus 87.4 cycles</code>. All peripheral timelines are projected to momentarily align with Core Nexus. Anticipate heightened energy signatures and potential cross-temporal contamination. Stability protocols: <code>ENGAGED</code>.</p>
+            </div>
+            <div class="content-panel">
+                <h3>Task Queue: Rift Stabilization</h3>
+                <p>Active Rifts Requiring Attenuation: <code>Alpha-003</code>, <code>Gamma-117</code>, <code>Sigma-42</code>. Prioritize Sigma-42 due to emergent chroniton particle cascade. Dispatch automated drones for harmonic dampening.</p>
+            </div>
+            <div class="content-panel">
+                <h3>System Update: Oracle v3.14</h3>
+                <p>Awaiting deployment. New predictive algorithms promise a <code>17.3%</code> increase in forecast accuracy for events within the next standard solar cycle. Caution: Model exhibits slight chaotic tendencies with long-range projections.</p>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-anomalies">
+        <div id="page-anomalies" class="page">
+            <h1 class="page-title">ANOMALIES :: OBSERVED</h1>
+            <div class="content-panel">
+                <h3>Quantum Foam Visualization</h3>
+                <p>Real-time simulation of sub-Planck scale energy fluctuations. This canvas renders a simplified model of emergent particle behavior in a high-energy vacuum state. Patterns are inherently chaotic and unpredictable.</p>
+            </div>
+            <canvas id="anomaly-canvas"></canvas>
+        </div>
+    </template>
+
+     <template id="template-codex">
+        <div id="page-codex" class="page">
+            <h1 class="page-title">CODEX :: ARCHIVES</h1>
+            <div class="content-panel">
+                <h3>Temporal Mechanics Primer</h3>
+                <p>Entry 1.1: The ChronoWeave operates on principles of N-dimensional timeline fracturing. Each "page" or "node" represents a stabilized observation point within a fluctuating meta-reality. Direct interaction carries inherent risks of paradox or ego-dissolution. Consult local safety protocols (Doc Ref: <code>CW-SEC-001</code>).</p>
+            </div>
+            <div class="content-panel">
+                <h3>Interface Glyphs & Symbology</h3>
+                <p>Nexus (Home): Represents the central, most stable point in the local spacetime. Echoes (Clock): Signifies past events, retrieved memories, or decaying information. Horizons (Arrow/Future): Future projections, tasks, or anticipated events. Anomalies (Abstract Shape): Uncategorized phenomena or abstract data streams. Codex (Book/File): Information, settings, and system logs.</p>
+            </div>
+             <div class="content-panel">
+                <h3>System Status</h3>
+                <p>Core Stabilizer: <code style="color:var(--accent-lime)">ONLINE</code><br>
+                   Reality Index: <code style="color:var(--accent-cyan)">97.8% (Nominal)</code><br>
+                   Paradox Buffer: <code style="color:var(--accent-lime)">72.1% Capacity</code><br>
+                   Last Maintenance Cycle: <code>T-2.3 cycles</code></p>
+                <button class="glitch-button" data-text="DIAGNOSTICS" onclick="alert('Running system diagnostics... Status: Optimal.')">RUN DIAGNOSTICS</button>
+            </div>
+        </div>
+    </template>
+
+     <template id="template-not-found">
+        <div id="page-not-found" class="page">
+            <h1 class="page-title">RIFT :: UNSTABLE</h1>
+            <div class="content-panel" style="text-align:center;">
+                <h3>ERROR 404 :: TIMELINE FRAGMENT LOST</h3>
+                <p>The requested data stream or temporal coordinate does not resolve within the current stability parameters. Recalibrate navigational sensors or return to a known stable point (Nexus recommended).</p>
+                <button class="glitch-button" data-text="RETURN TO NEXUS" onclick="navigateToPage('nexus')">RETURN TO NEXUS</button>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pageContentArea = document.getElementById('page-content-area');
+            const navNodes = document.querySelectorAll('.nav-node');
+            const transitionOverlay = document.getElementById('transition-overlay');
+            let currentPageId = null;
+
+            function setActiveNavNode(pageId) {
+                navNodes.forEach(node => {
+                    node.classList.remove('active');
+                    if (node.dataset.page === pageId) {
+                        node.classList.add('active');
+                    }
+                });
+            }
+
+            function renderPage(pageId) {
+                if (currentPageId === pageId) return; // Don't re-render if already on page
+
+                transitionOverlay.classList.add('active');
+                
+                // Hide current page if one exists
+                if (currentPageId) {
+                    const oldPageElement = document.getElementById(`page-${currentPageId}`);
+                    if (oldPageElement) {
+                         // Wait for fade out, then remove, not strictly necessary if just replacing innerHTML
+                         // oldPageElement.classList.remove('active');
+                    }
+                }
+
+                setTimeout(() => {
+                    pageContentArea.innerHTML = ''; // Clear old content
+                    const template = document.getElementById(`template-${pageId}`);
+                    
+                    if (template) {
+                        const newPageContent = template.content.cloneNode(true);
+                        pageContentArea.appendChild(newPageContent);
+                        // The 'active' class is added to the new page structure after it's appended.
+                        // The structure is: pageContentArea -> (div#page-nexus.page) -> h1, div.content-panel etc.
+                        // So, we select the first child of pageContentArea which is the new .page div
+                        const newPageElement = pageContentArea.firstChild;
+                        if(newPageElement && typeof newPageElement.classList !== 'undefined') {
+                             // Short delay to allow DOM to update before triggering animation
+                            requestAnimationFrame(() => {
+                                newPageElement.classList.add('active');
+                            });
+                        }
+
+
+                        setActiveNavNode(pageId);
+                        currentPageId = pageId;
+
+                        if (pageId === 'anomalies') {
+                            initAnomalyCanvas();
+                        }
+                    } else {
+                        // Load 404
+                        const notFoundTemplate = document.getElementById('template-not-found');
+                        pageContentArea.appendChild(notFoundTemplate.content.cloneNode(true));
+                        pageContentArea.firstChild.classList.add('active'); // Show 404 page
+                        setActiveNavNode(null); // No active nav for 404
+                        currentPageId = 'not-found';
+                    }
+
+                    // Allow time for new page elements to render if using element-specific enter anims
+                    // Then fade out overlay
+                     setTimeout(() => {
+                        transitionOverlay.classList.remove('active');
+                    }, 200); // Short delay, adjust as needed
+
+                }, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-page')) * 500 / 1000); // Half of transition
+            }
+            
+            window.navigateToPage = function(pageId) { // Make it globally accessible for buttons
+                window.location.hash = `#${pageId}`;
+            };
+
+            function handleRouteChange() {
+                let pageId = window.location.hash.substring(1);
+                if (!pageId) {
+                    pageId = 'nexus'; // Default page
+                    window.location.hash = '#nexus'; // Ensure hash is set
+                }
+                renderPage(pageId);
+            }
+
+            navNodes.forEach(node => {
+                node.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = node.dataset.page;
+                    if(pageId !== currentPageId) {
+                       navigateToPage(pageId);
+                    }
+                });
+            });
+
+            window.addEventListener('hashchange', handleRouteChange);
+            handleRouteChange(); // Initial load
+
+            // --- Anomaly Canvas ---
+            let anomalyCtx, anomalyParticles, W, H;
+            const numAnomalyParticles = 50;
+
+            function initAnomalyCanvas() {
+                const canvas = document.getElementById('anomaly-canvas');
+                if (!canvas) return;
+                anomalyCtx = canvas.getContext('2d');
+                
+                W = canvas.width = canvas.offsetWidth;
+                H = canvas.height = canvas.offsetHeight;
+                
+                anomalyParticles = [];
+                for (let i = 0; i < numAnomalyParticles; i++) {
+                    anomalyParticles.push(new AnomalyParticle());
+                }
+                drawAnomaly();
+            }
+
+            class AnomalyParticle {
+                constructor() {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.vx = (Math.random() - 0.5) * 0.8;
+                    this.vy = (Math.random() - 0.5) * 0.8;
+                    this.radius = Math.random() * 2 + 0.5;
+                    this.life = Math.random() * 100 + 50;
+                    this.initialLife = this.life;
+                    this.color = Math.random() > 0.66 ? 'var(--accent-cyan)' : (Math.random() > 0.5 ? 'var(--accent-magenta)' : 'var(--accent-lime)');
+                }
+
+                draw() {
+                    anomalyCtx.beginPath();
+                    anomalyCtx.arc(this.x, this.y, this.radius * (this.life / this.initialLife), 0, Math.PI * 2);
+                    anomalyCtx.fillStyle = this.color;
+                    anomalyCtx.globalAlpha = this.life / this.initialLife * 0.7;
+                    anomalyCtx.fill();
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.life--;
+
+                    if (this.x < 0 || this.x > W) this.vx *= -1;
+                    if (this.y < 0 || this.y > H) this.vy *= -1;
+
+                    if (this.life <= 0) {
+                        this.x = Math.random() * W;
+                        this.y = Math.random() * H;
+                        this.vx = (Math.random() - 0.5) * 0.8;
+                        this.vy = (Math.random() - 0.5) * 0.8;
+                        this.life = this.initialLife;
+                    }
+                }
+            }
+            let anomalyAnimationId;
+            function drawAnomaly() {
+                if (!anomalyCtx) return;
+                // cancelAnimationFrame(anomalyAnimationId); // Clear previous frame if re-init
+
+                anomalyCtx.clearRect(0, 0, W, H);
+                anomalyCtx.globalAlpha = 1;
+
+                anomalyParticles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+
+                // Draw connecting lines
+                anomalyCtx.strokeStyle = 'rgba(208, 224, 255, 0.05)';
+                anomalyCtx.lineWidth = 0.3;
+                for (let i = 0; i < anomalyParticles.length; i++) {
+                    for (let j = i + 1; j < anomalyParticles.length; j++) {
+                        let dist = Math.hypot(anomalyParticles[i].x - anomalyParticles[j].x, anomalyParticles[i].y - anomalyParticles[j].y);
+                        if (dist < W / 8) { // Connect if close enough
+                            anomalyCtx.beginPath();
+                            anomalyCtx.moveTo(anomalyParticles[i].x, anomalyParticles[i].y);
+                            anomalyCtx.lineTo(anomalyParticles[j].x, anomalyParticles[j].y);
+                            anomalyCtx.stroke();
+                        }
+                    }
+                }
+                anomalyAnimationId = requestAnimationFrame(drawAnomaly);
+            }
+             // Ensure canvas is cleared if navigating away
+            window.addEventListener('hashchange', () => {
+                if (currentPageId !== 'anomalies' && anomalyAnimationId) {
+                    cancelAnimationFrame(anomalyAnimationId);
+                    anomalyAnimationId = null;
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

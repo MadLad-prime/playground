@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellas Observatorium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep-space: #050815; /* Very dark blue-black */
+            --bg-interface: #101828;   /* Slightly lighter for panels */
+            --text-primary: #E0E5F0;
+            --text-secondary: #A0A8B8;
+            --accent-stellar-gold: #FFD700;
+            --accent-nebula-purple: #A060D0;
+            --accent-cygnus-blue: #60A0F0;
+            --border-color: #202840;
+            --font-display: 'Cinzel', serif; /* Elegant serif for titles */
+            --font-body: 'Lato', sans-serif;    /* Clean sans-serif for body */
+            --transition-main: 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --transition-fast: 0.3s ease;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-cygnus-blue) var(--bg-interface);
+        }
+        html::-webkit-scrollbar {
+            width: 8px;
+        }
+        html::-webkit-scrollbar-track {
+            background: var(--bg-interface);
+        }
+        html::-webkit-scrollbar-thumb {
+            background-color: var(--accent-cygnus-blue);
+            border-radius: 4px;
+            border: 2px solid var(--bg-interface);
+        }
+
+        body {
+            background-color: var(--bg-deep-space);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.7;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto; /* Ensure vertical scrolling is enabled */
+        }
+
+        /* --- Header Navigation --- */
+        .app-header {
+            background-color: rgba(5, 8, 21, 0.8); /* Dark, slightly transparent */
+            backdrop-filter: blur(10px);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+        }
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        .logo .highlight { color: var(--accent-stellar-gold); }
+
+        .main-nav ul {
+            list-style: none;
+            display: flex;
+        }
+        .main-nav li { margin-left: 30px; }
+        .main-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 400;
+            font-size: 0.95rem;
+            padding: 10px 5px;
+            position: relative;
+            transition: color var(--transition-fast);
+        }
+        .main-nav a:hover,
+        .main-nav a.active {
+            color: var(--accent-stellar-gold);
+        }
+        .main-nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background-color: var(--accent-stellar-gold);
+            transition: width var(--transition-fast);
+        }
+        .main-nav a:hover::after,
+        .main-nav a.active::after {
+            width: 100%;
+        }
+
+        /* Burger menu for mobile */
+        #menu-toggle { display: none; }
+        .burger-menu {
+            display: none; /* Hidden on desktop */
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .burger-menu div {
+            width: 25px;
+            height: 2px;
+            background-color: var(--text-primary);
+            margin: 5px 0;
+            transition: all 0.3s ease-in-out;
+        }
+
+
+        /* --- Main Content Staging Area --- */
+        #main-content-stage {
+            flex-grow: 1;
+            position: relative; /* For absolute positioned pages */
+            overflow: hidden; /* For page transitions */
+        }
+        .page-container {
+            position: relative; /* Change from absolute to relative */
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh; /* Ensure full height for scrolling */
+            padding: 40px;
+            opacity: 0;
+            transform: translateX(30px) scale(0.98);
+            transition: opacity var(--transition-main), transform var(--transition-main);
+            will-change: opacity, transform;
+            background-color: var(--bg-deep-space); /* Base page color */
+            overflow: visible; /* Allow content to overflow naturally */
+        }
+        .page-container.active {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            z-index: 1; /* Bring active page to front */
+        }
+        .page-container.exiting {
+            opacity: 0;
+            transform: translateX(-30px) scale(0.98);
+            z-index: 0;
+        }
+
+
+        /* Common Page Styles */
+        .page-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 15px;
+            position: relative;
+            letter-spacing: 1px;
+        }
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-stellar-gold), transparent);
+        }
+
+        .content-section {
+            max-width: 1100px;
+            margin: 0 auto 40px auto;
+            padding: 25px;
+            background-color: var(--bg-interface);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .content-section h3 {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            color: var(--accent-cygnus-blue);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .content-section p, .content-section li {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+        .content-section strong { color: var(--text-primary); }
+        .content-section a { color: var(--accent-cygnus-blue); text-decoration: none; }
+        .content-section a:hover { text-decoration: underline; }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        .card {
+            background-color: rgba(22, 27, 40, 0.7); /* Darker inner card */
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3), 0 0 15px var(--accent-cygnus-blue_alpha, rgba(96,160,240,0.1));
+        }
+        .card-image-container {
+            width: 100%;
+            height: 200px; /* Fixed height for consistency */
+            overflow: hidden;
+        }
+        .card-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        .card:hover .card-image-container img {
+            transform: scale(1.1);
+        }
+        .card-content {
+            padding: 20px;
+        }
+        .card-content h4 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .card-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* Filter/Search Bar */
+        .filter-controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filter-controls input[type="text"], .filter-controls select {
+            padding: 10px 15px;
+            background-color: var(--bg-deep-space);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-width: 200px;
+        }
+
+        /* Button */
+        .button-primary {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(45deg, var(--accent-cygnus-blue), var(--accent-nebula-purple));
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+            box-shadow: 0 3px 10px rgba(96,160,240,0.3);
+            cursor: pointer;
+        }
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(96,160,240,0.5);
+        }
+
+
+        /* --- Page Specific Styles --- */
+        /* Home Page Hero */
+        #page-home {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-height: calc(100vh - 80px); /* Adjust based on header height */
+            background: linear-gradient(rgba(5,8,21,0.7), rgba(5,8,21,0.7)), url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8c3BhY2V8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=1000&q=80') no-repeat center center;
+            background-size: cover;
+            background-attachment: fixed; /* Parallax-like */
+        }
+        #page-home .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            color: white;
+            text-shadow: 0 0 15px rgba(255,215,0,0.5), 0 0 30px rgba(255,215,0,0.3);
+            margin-bottom: 20px;
+            animation: fadeInDown 1s ease-out;
+        }
+        #page-home .hero-subtitle {
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
+            color: var(--text-primary);
+            max-width: 700px;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease-out 0.3s;
+            animation-fill-mode: backwards;
+        }
+        #page-home .button-primary { animation: fadeInUp 1s ease-out 0.6s; animation-fill-mode: backwards; }
+
+        @keyframes fadeInDown { from { opacity:0; transform: translateY(-30px); } to { opacity:1; transform: translateY(0); }}
+        @keyframes fadeInUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); }}
+
+
+        /* Object Detail Page */
+        .object-detail-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Image larger */
+            gap: 30px;
+            align-items: flex-start;
+        }
+        .object-detail-image img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            cursor: pointer; /* For lightbox */
+        }
+        .object-detail-info .info-list {
+            list-style: none; padding: 0;
+        }
+        .object-detail-info .info-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .object-detail-info .info-list li strong {
+            display: inline-block;
+            width: 120px; /* Consistent label width */
+            color: var(--accent-cygnus-blue);
+        }
+        .back-link { margin-bottom: 20px; display:inline-block; }
+
+
+        /* Lightbox */
+        #lightbox-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity var(--transition-fast), visibility 0s var(--transition-fast);
+        }
+        #lightbox-overlay.active { opacity: 1; visibility: visible; transition-delay: 0s; }
+        #lightbox-image {
+            max-width: 90%; max-height: 90%;
+            transform: scale(0.8); opacity: 0;
+            transition: transform var(--transition-fast) 0.1s, opacity var(--transition-fast) 0.1s;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        #lightbox-overlay.active #lightbox-image { transform: scale(1); opacity: 1; }
+        #lightbox-close {
+            position: absolute; top: 20px; right: 20px;
+            font-size: 2rem; color: white; cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        #lightbox-close:hover { transform: rotate(90deg) scale(1.1); }
+
+
+        /* Orrery Canvas (if used) */
+        #orrery-canvas {
+            width: 100%;
+            max-width: 700px;
+            height: 500px;
+            display: block;
+            margin: 20px auto;
+            background: var(--bg-deep-space);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+
+        /* --- Footer --- */
+        .app-footer {
+            background-color: var(--bg-interface);
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: auto; /* Push to bottom if content is short */
+        }
+        .app-footer a { color: var(--accent-cygnus-blue); }
+
+        /* Mobile Specific */
+        @media (max-width: 768px) {
+            .app-header { padding: 15px 20px; }
+            .main-nav {
+                display: none; /* Hide on mobile by default */
+                position: absolute;
+                top: 100%; /* Position below header */
+                left: 0;
+                width: 100%;
+                background-color: rgba(5, 8, 21, 0.95);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                padding: 20px 0;
+                border-top: 1px solid var(--border-color);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            }
+            .main-nav.active { display: flex; }
+            .main-nav ul { flex-direction: column; width: 100%; }
+            .main-nav li { margin: 10px 0; text-align: center; }
+            .main-nav a { font-size: 1.1rem; display: block; padding: 12px; }
+
+            .burger-menu { display: block; }
+            /* Active burger animation */
+            .burger-menu.active .bar1 { transform: rotate(-45deg) translate(-5px, 6px); }
+            .burger-menu.active .bar2 { opacity: 0; }
+            .burger-menu.active .bar3 { transform: rotate(45deg) translate(-5px, -6px); }
+
+            .page-container { padding: 20px; }
+            .page-title { font-size: clamp(1.8rem, 6vw, 2.5rem); }
+            .object-detail-grid { grid-template-columns: 1fr; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <a href="#home" class="logo">STELLAS <span class="highlight">OBSERVATORIUM</span></a>
+        <nav class="main-nav" id="mainNav">
+            <ul>
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#atlas" class="nav-link">Celestial Atlas</a></li>
+                <li><a href="#missions" class="nav-link">Mission Archives</a></li>
+                <li><a href="#events" class="nav-link">Sky Events</a></li>
+                <li><a href="#orrery" class="nav-link">The Orrery</a></li>
+                <li><a href="#knowledge" class="nav-link">Knowledge Base</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+            </ul>
+        </nav>
+        <div class="burger-menu" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
+            <div class="bar1"></div>
+            <div class="bar2"></div>
+            <div class="bar3"></div>
+        </div>
+    </header>
+
+    <main id="main-content-stage">
+        <!-- Page content will be loaded here -->
+    </main>
+
+    <footer class="app-footer">
+        <p>© <span id="currentYear"></span> Stellas Observatorium. Gaze into the cosmos.</p>
+        <p>Imagery placeholder credits: <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a></p>
+    </footer>
+
+    <div id="lightbox-overlay">
+        <span id="lightbox-close">×</span>
+        <img id="lightbox-image" src="" alt="Enlarged view">
+    </div>
+
+    <!-- PAGE TEMPLATES -->
+
+    <template id="template-home">
+        <div id="page-home" class="page-container">
+            <h1 class="hero-title">Explore the Infinite</h1>
+            <p class="hero-subtitle">Stellas Observatorium is your portal to the wonders of the universe. Discover distant galaxies, track pioneering missions, and unravel the mysteries of the cosmos.</p>
+            <a href="#atlas" class="button-primary">Begin Your Journey</a>
+        </div>
+    </template>
+
+    <template id="template-atlas">
+        <div id="page-atlas" class="page-container">
+            <h1 class="page-title">Celestial Atlas</h1>
+            <div class="content-section">
+                <div class="filter-controls">
+                    <input type="text" id="atlas-search" placeholder="Search objects...">
+                    <select id="atlas-type-filter">
+                        <option value="">All Types</option>
+                        <option value="Planet">Planet</option>
+                        <option value="Star">Star</option>
+                        <option value="Nebula">Nebula</option>
+                        <option value="Galaxy">Galaxy</option>
+                        <option value="Moon">Moon</option>
+                    </select>
+                </div>
+                <div class="card-grid" id="atlas-grid">
+                    <!-- Atlas items will be injected by JS -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-object-detail">
+        <div id="page-object-detail" class="page-container">
+             <a href="#atlas" class="back-link button-primary" style="background:var(--accent-cygnus-blue); font-size:0.9rem; padding:8px 15px;">← Back to Atlas</a>
+            <h1 class="page-title" id="object-name">[Object Name]</h1>
+            <div class="content-section">
+                <div class="object-detail-grid">
+                    <div class="object-detail-image">
+                        <img id="object-image" src="" alt="[Object Name]">
+                    </div>
+                    <div class="object-detail-info">
+                        <h3>Key Information</h3>
+                        <ul class="info-list">
+                            <li><strong>Type:</strong> <span id="object-type"></span></li>
+                            <li><strong>Distance:</strong> <span id="object-distance"></span></li>
+                            <li><strong>Diameter:</strong> <span id="object-diameter"></span></li>
+                            <li><strong>Discovered:</strong> <span id="object-discovery"></span></li>
+                            <li><strong>Constellation:</strong> <span id="object-constellation"></span></li>
+                        </ul>
+                    </div>
+                </div>
+                <h3 style="margin-top:30px;">Description</h3>
+                <p id="object-description"></p>
+                <div id="object-gallery" class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); margin-top:20px;">
+                    <!-- Additional images if any -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-missions">
+         <div id="page-missions" class="page-container">
+            <h1 class="page-title">Mission Archives</h1>
+            <div class="content-section">
+                <p>Explore humanity's greatest voyages into the cosmos. From the first steps on the Moon to robotic explorers venturing to the outer reaches of our solar system and beyond.</p>
+                <div class="card-grid" id="missions-grid">
+                    <!-- Mission cards will be injected by JS -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-events">
+         <div id="page-events" class="page-container">
+            <h1 class="page-title">Upcoming Sky Events</h1>
+            <div class="content-section">
+                <p>Witness the dynamic dance of the cosmos. Here are some notable celestial events to look out for.</p>
+                <ul id="events-list" style="list-style:none; padding-left:0;">
+                    <!-- Events will be injected by JS -->
+                </ul>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-orrery">
+        <div id="page-orrery" class="page-container">
+            <h1 class="page-title">The Celestial Orrery</h1>
+            <div class="content-section">
+                <p>A conceptual representation of a planetary system in motion. Observe the intricate ballet of celestial bodies orbiting their parent star. (Generative animation placeholder)</p>
+                <canvas id="orrery-canvas"></canvas>
+            </div>
+        </div>
+    </template>
+
+    <template id="template-knowledge">
+        <div id="page-knowledge" class="page-container">
+            <h1 class="page-title">Knowledge Base</h1>
+            <div class="content-section">
+                <h3>What is a Nebula?</h3>
+                <p>A nebula is an interstellar cloud of dust, hydrogen, helium and other ionized gases. Nebulae are often star-forming regions, such as in the "Pillars of Creation" in the Eagle Nebula. In these regions, the formations of gas, dust, and other materials "clump" together to form denser regions, which attract further matter, and eventually will become dense enough to form stars. The remaining material is then believed to form planets and other planetary system objects.</p>
+            </div>
+            <div class="content-section">
+                <h3>The Life Cycle of a Star</h3>
+                <p>Stars are born from clouds of gas and dust called nebulae. Gravity causes these clouds to collapse, forming a protostar. As the protostar contracts, its core becomes hotter and denser. Eventually, nuclear fusion begins, and the star starts to shine. Main sequence stars, like our Sun, fuse hydrogen into helium. When a star runs out of hydrogen fuel in its core, it evolves off the main sequence. Low-mass stars like the Sun become red giants, then planetary nebulae, and finally white dwarfs. High-mass stars become red supergiants, then explode as supernovae, leaving behind neutron stars or black holes.</p>
+            </div>
+            <div class="content-section">
+                <h3>Understanding Black Holes</h3>
+                <p>A black hole is a region of spacetime where gravity is so strong that nothing, not even light, can escape from it. The boundary of no escape is called the event horizon. Although the event horizon has an enormous effect on the fate and circumstances of an object crossing it, it has no locally detectable features. In many ways, a black hole acts like an ideal black body, as it reflects no light. Moreover, quantum field theory in curved spacetime predicts that event horizons emit Hawking radiation, with the same spectrum as a black body of a temperature inversely proportional to its mass.</p>
+            </div>
+        </div>
+    </template>
+
+     <template id="template-about">
+        <div id="page-about" class="page-container">
+            <h1 class="page-title">About Stellas Observatorium</h1>
+            <div class="content-section">
+                <h3>Our Cosmic Vision</h3>
+                <p>Stellas Observatorium is a digital sanctuary dedicated to the celestial wonders that surround us. Our mission is to foster a deeper appreciation for the universe by providing accessible, accurate, and beautifully presented information about astronomy and space exploration.</p>
+                <p>We believe that understanding our place in the cosmos is fundamental to the human experience. Through curated data, stunning visuals, and engaging narratives, we aim to inspire curiosity and ignite a passion for discovery in learners of all ages.</p>
+            </div>
+             <div class="content-section">
+                <h3>Data & Imagery</h3>
+                <p>The information and imagery presented in Stellas Observatorium are compiled from publicly available astronomical databases, academic resources, and space agency archives (such as NASA, ESA, etc.). While we strive for accuracy, this platform is intended for educational and inspirational purposes. For critical research, please consult primary scientific sources.</p>
+                <p>Placeholder images are primarily sourced from Unsplash and other royalty-free platforms, credited where appropriate. This serves as a template; a fully realized version would feature curated, high-resolution astronomical photography.</p>
+            </div>
+        </div>
+    </template>
+
+     <template id="template-not-found">
+        <div id="page-not-found" class="page-container" style="text-align:center;">
+            <h1 class="page-title" style="color: var(--accent-nebula-purple);">404 :: Signal Lost</h1>
+            <div class="content-section">
+                <p>The celestial coordinates you've entered do not correspond to any known region in our current charts. It seems this sector of the universe is uncharted or your signal has drifted off course.</p>
+                <a href="#home" class="button-primary" style="margin-top:20px;">Return to Home Base</a>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const mainContentStage = document.getElementById('main-content-stage');
+        const mainNav = document.getElementById('mainNav');
+        const navLinks = document.querySelectorAll('.main-nav .nav-link');
+        const menuToggle = document.getElementById('menu-toggle');
+        let currentPageElement = null;
+        let currentPath = '';
+
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // --- Dummy Data ---
+        const stellasData = {
+            celestialObjects: [
+                { id: "mars", name: "Mars", type: "Planet", distance: "225 million km (avg)", diameter: "6,779 km", discovery: "Known since antiquity", constellation: "Varies (Zodiac)", description: "Mars is the fourth planet from the Sun and the second-smallest planet in the Solar System, being larger than only Mercury. Often referred to as the 'Red Planet' due to its reddish appearance.", image: "https://images.unsplash.com/photo-1614728263955- Compromised data stream//PATH_Mars_Surface_Enhanced_UNSPLASH.jpg?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8bWFyc3xlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=600&q=60",
+                  gallery: ["https://images.unsplash.com/photo-1630040487288-66937c34034b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFycyUyMHN1cmZhY2V8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=400&q=60", "https://images.unsplash.com/photo-1614728850748-e1f150443793?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8bWFycyUyMHN1cmZhY2V8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=400&q=60"] },
+                { id: "jupiter", name: "Jupiter", type: "Planet", distance: "778 million km (avg)", diameter: "139,820 km", discovery: "Known since antiquity", constellation: "Varies (Zodiac)", description: "Jupiter is the fifth planet from the Sun and the largest in the Solar System. It is a gas giant with a mass more than two and a half times that of all the other planets in the Solar System combined.", image: "https://images.unsplash.com/photo-1614730321146-679102205e12?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8anVpeHRlcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=600&q=60" },
+                { id: "orion-nebula", name: "Orion Nebula (M42)", type: "Nebula", distance: "1,344 light-years", diameter: "24 light-years", discovery: "Nicolas-Claude Fabri de Peiresc, 1610", constellation: "Orion", description: "The Orion Nebula is a diffuse nebula situated in the Milky Way, being south of Orion's Belt in the constellation of Orion. It is one of the brightest nebulae and is visible to the naked eye in the night sky.", image: "https://images.unsplash.com/photo-1626594041004-7244903e1967?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8b3Jpb24lMjBuZWJ1bGF8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=600&q=60" },
+                { id: "andromeda-galaxy", name: "Andromeda Galaxy (M31)", type: "Galaxy", distance: "2.537 million light-years", diameter: "220,000 light-years", discovery: "Abd al-Rahman al-Sufi, 964 AD", constellation: "Andromeda", description: "The Andromeda Galaxy is a barred spiral galaxy and the nearest major galaxy to the Milky Way. It is on a collision course with the Milky Way, predicted to merge in about 4.5 billion years.", image: "https://images.unsplash.com/photo-1500999218103-1ff07a4a0fe8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YW5kcm9tZWRhJTIwZ2FsYXh5fGVufDB8fDB8fHww&auto=format&fit=crop&w=600&q=60" },
+                { id: "sirius", name: "Sirius", type: "Star", distance: "8.611 light-years", diameter: "2.396 million km (Sirius A)", discovery: "Known since antiquity", constellation: "Canis Major", description: "Sirius is the brightest star in the night sky. What the naked eye perceives as a single star is actually a binary star system, consisting of a white main-sequence star of spectral type A0 or A1, termed Sirius A, and a faint white dwarf companion of spectral type DA2, termed Sirius B.", image: "https://images.unsplash.com/photo-1539036656837-60f7fd6093fc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8c2lyaXVzJTIwc3RhcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=600&q=60" },
+                 { id: "titan", name: "Titan", type: "Moon", distance: "1.2 billion km (from Saturn)", diameter: "5,149 km", discovery: "Christiaan Huygens, 1655", constellation: "N/A (orbits Saturn)", description: "Titan is the largest moon of Saturn and the second-largest natural satellite in the Solar System. It is the only moon known to have a dense atmosphere, and the only known body in space, other than Earth, where clear evidence of stable bodies of surface liquid has been found.", image: "https://images.unsplash.com/photo-1614729939174-909559467143?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dGl0YW4lMjBtb29ufGVufDB8fDB8fHww&auto=format&fit=crop&w=600&q=60" },
+            ],
+            spaceMissions: [
+                { id: "apollo-11", name: "Apollo 11", date: "July 1969", objective: "First crewed landing on the Moon.", image: "https://images.unsplash.com/photo-1608178388098-459b58611930?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YXBvbGxvJTIwMTF8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=400&q=60", description: "Apollo 11 was the American spaceflight that first landed humans on the Moon. Commander Neil Armstrong and lunar module pilot Buzz Aldrin landed the Apollo Lunar Module Eagle on July 20, 1969, at 20:17 UTC."},
+                { id: "voyager-1", name: "Voyager 1", date: "Launched Sept 1977", objective: "Study outer planets & interstellar space.", image: "https://images.unsplash.com/photo-1580985299975-754d0189cd63?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dm95YWdlcnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=400&q=60", description: "Voyager 1 is a space probe launched by NASA on September 5, 1977, as part of the Voyager program to study the outer Solar System and interstellar space beyond the Sun's heliosphere. It is the most distant human-made object from Earth."},
+                { id: "jwst", name: "James Webb Space Telescope", date: "Launched Dec 2021", objective: "Infrared astronomy, observe distant objects.", image: "https://images.unsplash.com/photo-1640892990299-9f7959993f07?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8amFtZXMlMjB3ZWJiJTIwdGVsZXNjb3BlfGVufDB8fDB8fHww&auto=format&fit=crop&w=400&q=60", description: "The James Webb Space Telescope is a space telescope designed primarily to conduct infrared astronomy. As the largest optical telescope in space, its greatly improved infrared resolution and sensitivity allow it to view objects too old, distant, or faint for the Hubble Space Telescope."},
+                 { id: "hubble", name: "Hubble Space Telescope", date: "Launched April 1990", objective: "Observe the universe in visible, UV, and near-infrared.", image: "https://images.unsplash.com/photo-1580984933272-772304d03799?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aHViYmxlJTIwdGVsZXNjb3BlfGVufDB8fDB8fHww&auto=format&fit=crop&w=400&q=60", description: "The Hubble Space Telescope is a space telescope that was launched into low Earth orbit in 1990 and remains in operation. It was not the first space telescope, but it is one of the largest and most versatile, renowned both as a vital research tool and as a public relations boon for astronomy."},
+            ],
+            skyEvents: [
+                { name: "Perseid Meteor Shower", date: "August 12-13, 2024 (Peak)", description: "One of the most popular meteor showers, known for its bright and frequent meteors." },
+                { name: "Total Solar Eclipse", date: "April 8, 2024", description: "Visible across North America, a spectacular event where the Moon completely blocks the Sun." },
+                { name: "Geminid Meteor Shower", date: "December 13-14, 2024 (Peak)", description: "Known for its prolific and often colorful meteors, peaking in mid-December." },
+                { name: "Mars Opposition", date: "January 15, 2025", description: "Mars will be at its closest approach to Earth and fully illuminated by the Sun, making it brighter than usual." }
+            ]
+        };
+
+        // --- Router & Page Loading ---
+        function parseRoute(hash) {
+            const [path, param] = hash.substring(1).split('/');
+            return { path: path || 'home', param };
+        }
+
+        async function loadPage(pageName, param) {
+            if (currentPageElement) {
+                currentPageElement.classList.add('exiting');
+                await new Promise(resolve => setTimeout(resolve, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-main').replace('s','')) * 1000));
+                mainContentStage.removeChild(currentPageElement);
+            }
+            
+            const templateId = `template-${pageName === 'object' ? 'object-detail' : pageName}`;
+            const template = document.getElementById(templateId);
+
+            if (template) {
+                const newPage = template.content.cloneNode(true);
+                const pageContainer = newPage.querySelector('.page-container');
+                
+                // Populate dynamic content
+                if (pageName === 'atlas') {
+                    populateAtlas(pageContainer);
+                } else if (pageName === 'object' && param) {
+                    populateObjectDetail(pageContainer, param);
+                } else if (pageName === 'missions') {
+                    populateMissions(pageContainer);
+                } else if (pageName === 'events') {
+                    populateEvents(pageContainer);
+                } else if (pageName === 'orrery') {
+                    setTimeout(() => initOrrery(pageContainer), 10); // Ensure canvas is in DOM
+                }
+
+
+                mainContentStage.appendChild(pageContainer);
+                currentPageElement = pageContainer;
+                
+                // Force reflow for transition
+                void currentPageElement.offsetWidth;
+                currentPageElement.classList.add('active');
+                 window.scrollTo(0,0); // Scroll to top of new page content
+            } else {
+                console.error(`Template not found: ${templateId}`);
+                loadPage('not-found'); // Load 404
+            }
+            updateActiveNavLink(pageName, param);
+        }
+
+        function updateActiveNavLink(pageName, param) {
+            navLinks.forEach(link => {
+                const linkPath = (link.getAttribute('href') || "").substring(1);
+                // For object detail, we highlight 'atlas'
+                const effectivePageName = (pageName === 'object' && param) ? 'atlas' : pageName;
+                if (linkPath === effectivePageName) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        function handleRouteChange() {
+            const { path, param } = parseRoute(window.location.hash);
+            if(path === currentPath && path !== 'object') return; // Avoid reload if same page, unless it's an object page with different param
+            currentPath = path;
+            loadPage(path, param);
+        }
+
+        // Initial load and hash changes
+        window.addEventListener('hashchange', handleRouteChange);
+        handleRouteChange(); // Load initial page
+
+        // Mobile menu toggle
+        menuToggle.addEventListener('click', () => {
+            mainNav.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+            menuToggle.setAttribute('aria-expanded', mainNav.classList.contains('active'));
+        });
+        // Close mobile menu when a link is clicked
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (mainNav.classList.contains('active')) {
+                    mainNav.classList.remove('active');
+                    menuToggle.classList.remove('active');
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+
+
+        // --- Page Population Functions ---
+        function populateAtlas(pageContainer) {
+            const grid = pageContainer.querySelector('#atlas-grid');
+            const searchInput = pageContainer.querySelector('#atlas-search');
+            const typeFilter = pageContainer.querySelector('#atlas-type-filter');
+            if (!grid || !searchInput || !typeFilter) return;
+
+            let objectsToDisplay = [...stellasData.celestialObjects];
+
+            function renderGrid() {
+                grid.innerHTML = ''; // Clear previous items
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedType = typeFilter.value;
+
+                const filteredObjects = objectsToDisplay.filter(obj => {
+                    const nameMatch = obj.name.toLowerCase().includes(searchTerm);
+                    const typeMatch = selectedType ? obj.type === selectedType : true;
+                    return nameMatch && typeMatch;
+                });
+                
+                if (filteredObjects.length === 0) {
+                    grid.innerHTML = `<p style="grid-column: 1 / -1; text-align:center; color: var(--text-secondary);">No celestial objects found matching your criteria.</p>`;
+                }
+
+                filteredObjects.forEach(obj => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="card-image-container"><img src="${obj.image || 'https://via.placeholder.com/400x300/050815/A0A8B8?text=No+Image'}" alt="${obj.name}"></div>
+                        <div class="card-content">
+                            <h4>${obj.name}</h4>
+                            <p>Type: ${obj.type}</p>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => window.location.hash = `#object/${obj.id}`);
+                    grid.appendChild(card);
+                });
+            }
+            searchInput.addEventListener('input', renderGrid);
+            typeFilter.addEventListener('change', renderGrid);
+            renderGrid(); // Initial population
+        }
+
+        function populateObjectDetail(pageContainer, objectId) {
+            const obj = stellasData.celestialObjects.find(o => o.id === objectId);
+            if (!obj) {
+                loadPage('not-found'); // Redirect if object not found
+                return;
+            }
+            pageContainer.querySelector('#object-name').textContent = obj.name;
+            const mainImage = pageContainer.querySelector('#object-image');
+            mainImage.src = obj.image || 'https://via.placeholder.com/800x600/050815/A0A8B8?text=No+Image';
+            mainImage.alt = obj.name;
+            mainImage.onclick = () => showLightbox(mainImage.src);
+
+            pageContainer.querySelector('#object-type').textContent = obj.type;
+            pageContainer.querySelector('#object-distance').textContent = obj.distance;
+            pageContainer.querySelector('#object-diameter').textContent = obj.diameter;
+            pageContainer.querySelector('#object-discovery').textContent = obj.discovery;
+            pageContainer.querySelector('#object-constellation').textContent = obj.constellation || 'N/A';
+            pageContainer.querySelector('#object-description').textContent = obj.description;
+
+            const galleryContainer = pageContainer.querySelector('#object-gallery');
+            galleryContainer.innerHTML = '';
+            if(obj.gallery && obj.gallery.length > 0) {
+                obj.gallery.forEach(imgSrc => {
+                    const imgCard = document.createElement('div');
+                    imgCard.className = 'card'; // Re-use card style for thumbnails
+                    imgCard.innerHTML = `<div class="card-image-container" style="height:120px;"><img src="${imgSrc}" alt="${obj.name} additional image"></div>`;
+                    imgCard.onclick = () => showLightbox(imgSrc);
+                    galleryContainer.appendChild(imgCard);
+                });
+            }
+        }
+
+        function populateMissions(pageContainer) {
+            const grid = pageContainer.querySelector('#missions-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            stellasData.spaceMissions.forEach(mission => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                // No click action for mission cards in this example for simplicity, could link to mission detail
+                card.innerHTML = `
+                    <div class="card-image-container"><img src="${mission.image}" alt="${mission.name}"></div>
+                    <div class="card-content">
+                        <h4>${mission.name}</h4>
+                        <p><strong>Date:</strong> ${mission.date}</p>
+                        <p>${mission.description.substring(0,100)}...</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+        
+        function populateEvents(pageContainer) {
+            const list = pageContainer.querySelector('#events-list');
+            if(!list) return;
+            list.innerHTML = '';
+            stellasData.skyEvents.forEach(event => {
+                const li = document.createElement('li');
+                li.style.padding = "15px";
+                li.style.marginBottom = "10px";
+                li.style.backgroundColor = "rgba(22, 27, 40, 0.5)";
+                li.style.borderRadius = "4px";
+                li.style.borderLeft = `3px solid ${Math.random() > 0.5 ? 'var(--accent-stellar-gold)' : 'var(--accent-cygnus-blue)'}`;
+
+                li.innerHTML = `
+                    <h4 style="font-family:var(--font-display); color:var(--text-primary); margin-bottom:5px;">${event.name}</h4>
+                    <p style="font-size:0.9em; color:var(--text-secondary); margin-bottom:3px;"><strong>Date:</strong> ${event.date}</p>
+                    <p style="font-size:0.95em; color:var(--text-secondary); margin-bottom:0;">${event.description}</p>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        // --- Lightbox ---
+        const lightboxOverlay = document.getElementById('lightbox-overlay');
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxClose = document.getElementById('lightbox-close');
+
+        function showLightbox(src) {
+            lightboxImage.src = src;
+            lightboxOverlay.classList.add('active');
+        }
+        lightboxClose.addEventListener('click', () => lightboxOverlay.classList.remove('active'));
+        lightboxOverlay.addEventListener('click', (e) => {
+            if (e.target === lightboxOverlay) lightboxOverlay.classList.remove('active');
+        });
+
+
+        // --- Orrery (Simple Placeholder Canvas Animation) ---
+        let orreryAnimationId;
+        function initOrrery(pageContainer) {
+            const canvas = pageContainer.querySelector('#orrery-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const sun = { x: canvas.width / 2, y: canvas.height / 2, radius: 20, color: 'var(--accent-stellar-gold)' };
+            const planets = [
+                { radius: 5, dist: 60, speed: 0.01, angle: Math.random()*Math.PI*2, color: 'var(--accent-cygnus-blue)' },
+                { radius: 8, dist: 100, speed: 0.007, angle: Math.random()*Math.PI*2, color: 'var(--accent-nebula-purple)' },
+                { radius: 6, dist: 150, speed: 0.005, angle: Math.random()*Math.PI*2, color: '#B22222' }, // Mars-like
+                { radius: 3, dist: 190, speed: 0.003, angle: Math.random()*Math.PI*2, color: 'var(--text-secondary)' },
+            ];
+
+            function drawOrrery() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Sun
+                ctx.beginPath();
+                ctx.arc(sun.x, sun.y, sun.radius, 0, Math.PI * 2);
+                ctx.fillStyle = sun.color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = sun.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Planets
+                planets.forEach(p => {
+                    p.angle += p.speed;
+                    const x = sun.x + Math.cos(p.angle) * p.dist;
+                    const y = sun.y + Math.sin(p.angle) * p.dist;
+
+                    // Orbit path
+                    ctx.beginPath();
+                    ctx.arc(sun.x, sun.y, p.dist, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(160, 168, 184, 0.1)'; // Faint orbit line
+                    ctx.stroke();
+                    
+                    // Planet
+                    ctx.beginPath();
+                    ctx.arc(x, y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                });
+                orreryAnimationId = requestAnimationFrame(drawOrrery);
+            }
+             if (orreryAnimationId) cancelAnimationFrame(orreryAnimationId); // Clear previous before starting
+            drawOrrery();
+        }
+        // Stop Orrery animation if navigating away to save resources
+        window.addEventListener('hashchange', () => {
+             if(currentPath !== 'orrery' && orreryAnimationId){
+                cancelAnimationFrame(orreryAnimationId);
+                orreryAnimationId = null;
+             }
+        });
+
+    });
+    </script>
+
+</body>
+</html>
