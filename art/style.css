@@ -1,0 +1,409 @@
+/* ---- GLOBAL & TYPOGRAPHY ---- */
+:root {
+    --font-serif: 'Cormorant Garamond', serif;
+    --font-sans: 'Montserrat', sans-serif;
+    --color-text-light: #e0e0e0;
+    --color-text-dark: #222222;
+    --color-bg-light: #f4f4f4;
+    --color-bg-dark: #121212;
+    --color-accent: #b4a896;
+    --transition-speed: 500ms;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-light);
+    color: var(--color-text-dark);
+    line-height: 1.7;
+}
+
+.content-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 100px 40px;
+}
+
+.section-title {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    font-weight: 300;
+    text-align: center;
+    margin-bottom: 80px;
+    color: var(--color-text-dark);
+}
+
+/* ---- 1. HOME: HERO SECTION ---- */
+.hero {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: var(--color-text-light);
+    background-size: cover;
+    background-position: center;
+    transition: background-image 2s ease-in-out;
+    position: relative;
+}
+
+.hero::after { /* Dark overlay for text readability */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.hero.day {
+    background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb'); /* Replace with your images/hero-day.jpg */
+}
+
+.hero.night {
+    background-image: url('https://images.unsplash.com/photo-1507525428034-b723a9ce6890?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb'); /* Replace with your images/hero-night.jpg */
+}
+
+.hero-content {
+    z-index: 1;
+}
+
+.hero h1 {
+    font-family: var(--font-serif);
+    font-size: 4.5rem;
+    font-weight: 400;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    font-weight: 300;
+}
+
+.fade-in {
+    animation: fadeIn 2s ease-in-out forwards;
+    opacity: 0;
+}
+.fade-in-delay {
+    animation: fadeIn 2s 1s ease-in-out forwards;
+    opacity: 0;
+}
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* ---- 2. NAVIGATION ---- */
+.main-nav {
+    position: fixed;
+    top: 30px;
+    right: 40px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.main-nav .nav-handle {
+    font-size: 2rem;
+    color: var(--color-text-light);
+    writing-mode: vertical-rl;
+    transition: color 0.4s ease;
+}
+.main-nav:hover .nav-handle {
+    color: transparent;
+}
+
+.main-nav ul {
+    list-style: none;
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%) translateX(110%);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 5px;
+    padding: 20px 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform var(--transition-speed) ease-in-out, opacity var(--transition-speed) ease-in-out;
+}
+
+.main-nav:hover ul {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+    pointer-events: auto;
+}
+
+.main-nav li a {
+    display: block;
+    color: var(--color-text-light);
+    text-decoration: none;
+    padding: 10px 30px;
+    font-size: 1rem;
+    font-weight: 400;
+    transition: background 0.3s ease, color 0.3s ease;
+    white-space: nowrap;
+}
+
+.main-nav li a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+
+/* ---- 3. GALLERY ---- */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 40px;
+}
+
+.gallery-item {
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.gallery-item:hover {
+    transform: scale(1.03);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+.gallery-item img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-speed) ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.1);
+}
+
+.item-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: var(--color-text-light);
+    transform: translateY(100%);
+    opacity: 0;
+    transition: transform var(--transition-speed) ease, opacity var(--transition-speed) ease;
+}
+
+.gallery-item:hover .item-overlay {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.item-overlay h3 {
+    font-family: var(--font-serif);
+    font-weight: 700;
+}
+
+/* ---- GALLERY MODAL ---- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(18, 18, 18, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-speed) ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    display: flex;
+    max-width: 90%;
+    max-height: 90vh;
+    animation: zoomIn 0.5s ease;
+}
+
+.modal-content img {
+    max-width: 65%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-caption {
+    width: 35%;
+    padding: 40px;
+    color: var(--color-text-light);
+    overflow-y: auto;
+}
+
+.modal-caption h3 {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.modal-caption #modal-artist {
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--color-accent);
+    margin-bottom: 20px;
+}
+
+.modal-caption #modal-description {
+    font-weight: 300;
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+.modal-close {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-size: 3rem;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.modal-close:hover {
+    transform: scale(1.2) rotate(90deg);
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* ---- 4. ESSAYS ---- */
+.essay-section {
+    background-color: #ffffff;
+}
+
+.essay-content {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.essay-content h3 {
+    font-family: var(--font-serif);
+    font-size: 2.2rem;
+    font-weight: 400;
+    margin-bottom: 2rem;
+}
+
+.essay-content p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.essay-content blockquote {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-style: italic;
+    font-weight: 400;
+    border-left: 3px solid var(--color-accent);
+    padding-left: 30px;
+    margin: 50px 0 50px 30px;
+    color: #555;
+}
+
+/* -- Scroll animation for essays -- */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 1s ease-out, transform 1s ease-out;
+}
+.reveal-on-scroll.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* ---- SECRET SURPRISE ---- */
+.secret-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 2s ease;
+}
+
+.secret-overlay.revealed {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.secret-content {
+    color: #0f0; /* Classic hacker green */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px #0f0;
+}
+
+.secret-content p {
+    margin-bottom: 1rem;
+}
+
+.secret-content span {
+    display: block;
+    margin-top: 2rem;
+    font-size: 1rem;
+    color: #0c0;
+}
+
+/* --- Responsive adjustments --- */
+@media (max-width: 768px) {
+    .hero h1 { font-size: 3rem; }
+    .hero p { font-size: 1rem; }
+    .section-title { font-size: 2.5rem; }
+    .content-section { padding: 80px 20px; }
+
+    .modal-content {
+        flex-direction: column;
+        width: 95%;
+    }
+    .modal-content img {
+        max-width: 100%;
+        max-height: 50vh;
+        border-right: none;
+    }
+    .modal-caption {
+        width: 100%;
+        max-height: 40vh;
+    }
+}

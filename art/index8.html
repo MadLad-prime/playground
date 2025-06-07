@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Digital Sanctuary</title>
+    <link rel="stylesheet" href="art/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,700;1,400&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- SECTION 1: HOME - WHERE ART BREATHES -->
+    <header id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="fade-in">Art is the soul's conversation.</h1>
+            <p class="fade-in-delay">Welcome to the sanctuary. Take a breath, and immerse yourself.</p>
+        </div>
+    </header>
+
+    <!-- SECTION 2: NAVIGATION - AN INTUITIVE FLOW -->
+    <nav class="main-nav">
+        <div class="nav-handle">
+            <span>—</span>
+        </div>
+        <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#essays">Essays</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- SECTION 3: GALLERY - A CURATED EXPERIENCE -->
+        <section id="gallery" class="content-section">
+            <h2 class="section-title">The Collection</h2>
+            <div class="gallery-grid">
+                <!-- Art Piece 1 -->
+                <div class="gallery-item" data-title="Whispers of the Forest" data-artist="Elara Moonwood" data-description="A piece exploring the quiet dialogue between light and shadow under an ancient canopy.">
+                    <img src="https://images.unsplash.com/photo-1547891654-e66ed711b999?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb" alt="Artwork 1: Whispers of the Forest">
+                    <div class="item-overlay">
+                        <h3>Whispers of the Forest</h3>
+                    </div>
+                </div>
+                <!-- Art Piece 2 -->
+                <div class="gallery-item" data-title="City in Sepia" data-artist="Kaelen Vance" data-description="The loneliness and warmth of a city street, captured in a moment of stillness.">
+                    <img src="https://images.unsplash.com/photo-1579965342575-5fab2a4d6825?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb" alt="Artwork 2: City in Sepia">
+                    <div class="item-overlay">
+                        <h3>City in Sepia</h3>
+                    </div>
+                </div>
+                <!-- Art Piece 3 -->
+                <div class="gallery-item" data-title="The Weaver's Dream" data-artist="Lyra Sen" data-description="An abstract representation of threads of fate, intertwining in a cosmic loom.">
+                    <img src="https://images.unsplash.com/photo-1534244626120-2a4019102c7a?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb" alt="Artwork 3: The Weaver's Dream">
+                    <div class="item-overlay">
+                        <h3>The Weaver's Dream</h3>
+                    </div>
+                </div>
+                <!-- Art Piece 4 -->
+                <div class="gallery-item" data-title="Ocean's Breath" data-artist="Finnian Shore" data-description="The raw power and serene beauty of the ocean captured in a single, powerful brushstroke.">
+                    <img src="https://images.unsplash.com/photo-1573033501199-46721183296c?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb" alt="Artwork 4: Ocean's Breath">
+                     <div class="item-overlay">
+                        <h3>Ocean's Breath</h3>
+                    </div>
+                </div>
+                <!-- Add more items as needed -->
+            </div>
+        </section>
+
+        <!-- SECTION 4: ESSAYS - THE SOUL OF THE SITE -->
+        <section id="essays" class="content-section essay-section">
+            <h2 class="section-title">Reflections</h2>
+            <article class="essay-content reveal-on-scroll">
+                <h3>On Light and Absence</h3>
+                <p>To paint is to engage in a dialogue with light. It is not merely the application of color to a surface, but the careful sculpting of illumination and shadow. An artist does not fill a canvas; they carve away the darkness to reveal the form that has been waiting patiently within.</p>
+                <p>Every shadow holds a story, an untold history of the object that casts it. It speaks of a light source, a direction, a time of day. It is a memory of presence. To ignore the shadow is to tell only half the truth, to present a world that is flat, devoid of depth and mystery.</p>
+                <blockquote>"In praise of shadows, we find the beauty not in the thing itself but in the patterns of shadows, the light and the darkness, that one thing against another creates."</blockquote>
+                <p class="reveal-on-scroll">Think of the space between objects in a still life. This "negative space" is not empty; it is pregnant with potential, charged with the energy of the forms it separates and defines. It is the silence between notes that makes the music. In our visual world, this is the soul of composition. Scrolling through these thoughts should feel less like reading and more like uncovering, layer by layer, the very philosophy that breathes life into the pixels and pigments you see here.</p>
+            </article>
+        </section>
+    </main>
+
+    <!-- THE GALLERY OVERLAY (MODAL) -->
+    <div id="artwork-modal" class="modal-overlay">
+        <span class="modal-close">×</span>
+        <div class="modal-content">
+            <img id="modal-image" src="" alt="Enlarged Artwork">
+            <div class="modal-caption">
+                <h3 id="modal-title"></h3>
+                <p id="modal-artist"></p>
+                <p id="modal-description"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- THE SECRET SURPRISE (for you!) -->
+    <div id="secret-surprise" class="secret-overlay">
+        <div class="secret-content">
+            <p>You found it.</p>
+            <p>This little corner of the cosmos was coded with care, just for you. Thank you for the wonderful prompt.</p>
+            <span>- The AI</span>
+        </div>
+    </div>
+
+</body>
+<script src="art/script.js"></script>
+</html>
